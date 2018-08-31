@@ -34,16 +34,18 @@ def valid_regex(regex_string):
     return fr"{regex_string}"
 
 
-def valid_repo(repo_string):
+def valid_repo(repo_path):
     """
-    Determines whether the given repo string is a valid repo
+    Determines whether the given repo string is a valid repo. If so, returns
+    the repo path, else raises ArgumentTypeError.
     """
     try:
-        return git.Repo(repo_string)
+        git.Repo(repo_path)
     except git.InvalidGitRepositoryError:
-        raise argparse.ArgumentTypeError(f"Invalid git repo: {repo_string}")
+        raise argparse.ArgumentTypeError(f"Invalid git repo: {repo_path}")
     except git.NoSuchPathError:
-        raise argparse.ArgumentTypeError(f"Invalid repo path: {repo_string}")
+        raise argparse.ArgumentTypeError(f"Invalid repo path: {repo_path}")
+    return repo_path
 
 
 class GitReplayerParser(argparse.ArgumentParser):
