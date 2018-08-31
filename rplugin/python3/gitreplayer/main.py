@@ -12,8 +12,7 @@ def main():
     GitReplayerParser().parse_args(replayer_args)
     # Add as a string so that it doesn't interfere with nvim args.
     # TODO(mitch): remove hardcoding of command name?
-    neovim_command = '":InitGitReplayer ' + ' '.join(replayer_args) + '"'
-    subprocess.run(['nvim', '-c', neovim_command])
+    subprocess.run(['nvim', '-c', ':InitGitReplayer ' + ' '.join(replayer_args)])
 
 
 if __name__ == "__main__":
