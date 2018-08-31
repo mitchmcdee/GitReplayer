@@ -68,11 +68,11 @@ class GitReplayerPlugin:
                 self.files[file_path].insert(current_line_num, added_line)
                 # TODO(mitch): work out why previous lines are being erased
                 self.nvim.current.buffer.append(' ', current_line_num)
-                current_line_num += 1
                 # Write out all chars in added line.
                 for i in range(len(added_line)):
                     self.nvim.current.buffer[current_line_num] = added_line[:i]
                     time.sleep(1 / self.playback_speed)
+                current_line_num += 1
             elif change_type == "-":
                 self.files[file_path].pop(current_line_num)
                 del self.nvim.current.buffer[current_line_num]
