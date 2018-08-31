@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from difflib import unified_diff
 from tqdm import tqdm
+from parser import GitReplayerParser
+from util import get_blob_as_splitlines, is_blob_file_in_regex
 
 
 # Git's magic empty tree sha1 hash.
@@ -28,71 +30,66 @@ class GitReplayer:
 
     @neovim.command('InitGitReplayer', nargs='*')
     def on_init_git_replayer(self, args):
-        self.nvim.current.line = f'Command with args: {args}'
+        parsed_args = GitReplayerParser().parse_args(args)
+        repo = git.Repo(parsed_args.repo_path)
+        file_regex = parsed_args.file_regex
+        start_datetime = parsed_args.start_datetime
+        end_datetime = parsed_args.end_datetime
+        self.playback_speed = parsed_args.playback_speed
+        timeline = self.get_timeline(repo, start_datetime, end_datetime, file_regex)
+        if len(timeline) == 0:
+            print('No commits in git repo to process.')
+            sys.exit(1)
+        # Initial repo file state
+        self.initial_files = {
+            file.b_path: get_blob_as_splitlines(file.b_blob) for file in timeline[0]
+        }
+        # Commits to visualise.
+        self.timeline = timeline[1:]
+        # GitReplayer(timeline, parsed_args.playback_speed).play
 
+    def get_commits_in_range(repo, start_datetime, end_datetime):
+        """
+        Get commits from oldest to newest and filter out those outside the given range.
+        """
+        commits = []
+        chronological_commits = list(reversed(list(repo.iter_commits())))
+        for commit_num, commit in enumerate(chronological_commits):
+            commit_datetime = datetime.fromtimestamp(commit.committed_date)
+            if start_datetime >= commit_datetime:
+                continue
+            if commit_datetime >= end_datetime:
+                break
+            # If we're adding the first commit, make sure we add either the previous
+            # commit or an empty tree to correctly diff the timeline.
+            if len(commits) == 0:
+                if commit_num != 0:
+                    commits.append(chronological_commits[commit_num - 1])
+                else:
+                    commits.append(repo.tree(MAGIC_EMPTY_TREE_HASH))
+            commits.append(commit)
+        return commits
 
-def get_blob_as_splitlines(blob):
-    """
-    Attempts to decode and split the blob file lines. If successful, returns
-    the splitlines, else returns an empty list.
-    """
-    try:
-        return blob.data_stream.read().decode().splitlines(keepends=True)
-    except:
-        return []
-
-
-def get_commits_in_range(repo, start_datetime, end_datetime):
-    """
-    Get commits from oldest to newest and filter out those outside the given range.
-    """
-    commits = []
-    chronological_commits = list(reversed(list(repo.iter_commits())))
-    for commit_num, commit in enumerate(chronological_commits):
-        commit_datetime = datetime.fromtimestamp(commit.committed_date)
-        if start_datetime >= commit_datetime:
-            continue
-        if commit_datetime >= end_datetime:
-            break
-        # If we're adding the first commit, make sure we add either the previous commit
-        # or an empty tree to correctly diff the timeline.
-        if len(commits) == 0:
-            if commit_num != 0:
-                commits.append(chronological_commits[commit_num - 1])
-            else:
-                commits.append(repo.tree(MAGIC_EMPTY_TREE_HASH))
-        commits.append(commit)
-    return commits
-
-
-def is_file_in_regex(file, file_regex):
-    """
-    Returns True if the given file contains a path that matches the given file regex,
-    else returns False.
-    """
-    return any(re.search(file_regex, p) for p in (file.a_path, file.b_path))
-
-
-def get_timeline(repo: git.Repo, start_datetime, end_datetime, file_regex):
-    """
-    Get a list of timeline entries representing the current state of the repo at
-    each commit, where each entry is a delta on the previous and the first entry
-    is the starting state.
-    """
-    timeline = []
-    commits = get_commits_in_range(repo, start_datetime, end_datetime)
-    previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
-    for commit_num, commit in tqdm(enumerate(commits), total=len(commits)):
-        timestep = []
-        for changed_file in previous_commit.diff(commit):
-            # First entry in timeline is the current state, so ignore invalid regex.
-            if commit_num == 0 or is_file_in_regex(changed_file, file_regex):
-                timestep.append(changed_file)
-        # First entry in timeline is the current state, so ignore if empty.
-        if commit_num == 0 or len(timestep) != 0:
-            timeline.append(timestep)
-        previous_commit = commit
-    return timeline
+    def get_timeline(self, repo, start_datetime, end_datetime, file_regex):
+        """
+        Get a list of timeline entries representing the current state of the repo at
+        each commit, where each entry is a delta on the previous and the first entry
+        is the starting state.
+        """
+        timeline = []
+        commits = self.get_commits(repo, start_datetime, end_datetime)
+        previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
+        for commit_num, commit in tqdm(enumerate(commits), total=len(commits)):
+            timestep = []
+            for changed_file in previous_commit.diff(commit):
+                # First entry in timeline is the current state, so ignore invalid regex.
+                if commit_num == 0 or is_file_in_regex(changed_file, file_regex):
+                    timestep.append(changed_file)
+            # First entry in timeline is the current state, so ignore if empty.
+            if commit_num == 0 or len(timestep) != 0:
+                timeline.append(timestep)
+            previous_commit = commit
+        return timeline
 
 
 # class GitReplayer:
@@ -202,14 +199,3 @@ def get_timeline(repo: git.Repo, start_datetime, end_datetime, file_regex):
 #                         del self.files[file.a_path]
 #             else:
 #                 break
-
-
-# def main():
-    # parsed_args = arg_parser.parse_args(sys.argv[1:])
-    # repo = git.Repo(parsed_args.repo_path)
-    # window = Window(parsed_args.start_datetime, parsed_args.end_datetime)
-    # print("Processing git timeline...")
-    # timeline = get_timeline(repo, window, parsed_args.file_regex)
-    # print("Starting GitReplayer...")
-    # curses.wrapper(GitReplayer(timeline, parsed_args.playback_speed).play)
-    # print("Finished!")
