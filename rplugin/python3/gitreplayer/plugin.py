@@ -25,15 +25,19 @@ class GitReplayer:
 
     def __init__(self, nvim):
         self.nvim = nvim
+        self.count = 0
 
     @neovim.function('TestFunction', sync=True)
     def testfunction(self, args):
         return 3
 
-    @neovim.command('TestCommand', nargs='*', range='')
-    def testcommand(self, args, range):
-        self.nvim.current.line = ('Command with args: {}, range: {}'
-                                  .format(args, range))
+    @neovim.command('TestPrint')
+    def testcommand(self):
+        self.nvim.current.line = f'{self.count}'
+
+    @neovim.command('TestInc')
+    def testcommand(self):
+        self.count += 1
 
     @neovim.autocmd('VimEnter', pattern='*.git', sync=True)
     def on_git_repo_enter(self, filename):
