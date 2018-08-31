@@ -19,6 +19,7 @@ class GitReplayerPlugin:
     def __init__(self, nvim):
         self.nvim = nvim
 
+    # TODO(mitch): investigate syntax highlighting
     # TODO(mitch): setup neovim keypresses
     # TODO(mitch): support play, pause, restart, quit, speed up/down, forward/back timestep commands
     # TODO(mitch): setup state
@@ -82,9 +83,7 @@ class GitReplayerPlugin:
         """
         Start git repo playback.
         """
-        # TODO(mitch): replace curses with vim for syntax highlighting and nicer text handling?
         while True:
-            print('hi')
             self.files = self.initial_files
             # For each timestep, play back the changed lines in affected files.
             for timestep in self.timeline:
@@ -101,6 +100,7 @@ class GitReplayerPlugin:
                     # Remove deleted files
                     if file.deleted_file:
                         del self.files[file.a_path]
+            #TODO(mitch): fix this loop
             else:
                 break
 
