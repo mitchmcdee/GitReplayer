@@ -61,8 +61,8 @@ class GitReplayerPlugin:
                 # TODO(mitch): explain why removing one is necessary
                 if a_num_lines != 0:
                     current_line_num -= 1
-                # Jump to current line
-                self.nvim.command(f':g {current_line_num}')
+                # # Jump to current line
+                # self.nvim.command(f':g {current_line_num}')
             elif change_type == "+":
                 added_line = line[1:]
                 self.files[file_path].insert(current_line_num, added_line)
