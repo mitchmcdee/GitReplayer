@@ -30,10 +30,6 @@ class GitReplayer:
     def on_init_git_replayer(self, args):
         self.nvim.current.line = f'Command with args: {args}'
 
-    @neovim.autocmd('VimEnter', pattern='*.git', sync=True)
-    def on_vim_enter(self):
-        self.nvim.out_write('hey!')
-
 
 def get_blob_as_splitlines(blob):
     """
