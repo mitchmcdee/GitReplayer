@@ -52,8 +52,8 @@ class GitReplayerPlugin:
         """
         Draws the file changes to the screen.
         """
-        # TODO(mitch): abstract out writing to screen + refreshing + waiting?
         file_path = file.b_path or file.a_path
+        self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
         for line in get_file_diff(file):
             change_type = line[0]
             if change_type == "@":
@@ -61,8 +61,8 @@ class GitReplayerPlugin:
                 # TODO(mitch): explain why removing one is necessary
                 if a_num_lines != 0:
                     current_line_num -= 1
-                # Draw file
-                self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
+                # Jump to current line
+                self.nvim.command(f':g {current_line_num}')
             elif change_type == "+":
                 added_line = line[1:]
                 self.files[file_path].insert(current_line_num, added_line)
