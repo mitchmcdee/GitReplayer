@@ -75,8 +75,7 @@ class GitReplayerPlugin:
                     time.sleep(1 / self.playback_speed)
             elif change_type == "-":
                 self.files[file_path].pop(current_line_num)
-                # Delete line.
-                self.nvim.current.buffer[current_line_num] = []
+                del self.nvim.current.buffer[current_line_num]
             time.sleep(1 / self.playback_speed)
 
     def replay(self):
