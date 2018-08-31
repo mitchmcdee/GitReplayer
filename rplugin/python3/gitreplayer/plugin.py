@@ -1,3 +1,5 @@
+import neovim
+import subprocess
 import sys
 import argparse
 import git
@@ -15,6 +17,19 @@ from tqdm import tqdm
 DEFAULT_PLAYBACK_SPEED = 1000
 # Git's magic empty tree sha1 hash.
 MAGIC_EMPTY_TREE_HASH = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+
+@neovim.plugin
+class GitReplayer:
+    '''
+    TODO(mitch): write this.
+    '''
+
+    def __init__(self, nvim):
+        self.nvim = nvim
+
+    @neovim.autocmd('GitRepoEnter', pattern='*.git', sync=True)
+    def on_git_repo_enter(self, filename):
+        self.nvim.out_write('testplugin is in ' + filename + '\n')
 
 
 def get_blob_as_splitlines(blob):
@@ -270,6 +285,7 @@ def main():
         default=DEFAULT_PLAYBACK_SPEED,
         help="The initial playback speed in characters per second",
     )
+    # subprocess.run('nvim')
     parsed_args = arg_parser.parse_args(sys.argv[1:])
     repo = git.Repo(parsed_args.repo_path)
     window = Window(parsed_args.start_datetime, parsed_args.end_datetime)
