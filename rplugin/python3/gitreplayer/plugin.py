@@ -62,7 +62,7 @@ class GitReplayerPlugin:
                 if a_num_lines != 0:
                     current_line_num -= 1
                 # Draw file
-                self.nvim.current.buffer[:] = self.files[file_path]
+                self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
             elif change_type == "+":
                 added_line = line[1:]
                 self.files[file_path].insert(current_line_num, added_line)
