@@ -62,7 +62,7 @@ class GitReplayerPlugin:
                 if a_num_lines != 0:
                     current_line_num -= 1
                 # Jump to current line
-                self.nvim.command(current_line_num)
+                self.nvim.command(str(current_line_num))
             elif change_type == "+":
                 added_line = line[1:]
                 self.files[file_path].insert(current_line_num, added_line)
@@ -133,6 +133,7 @@ class GitReplayerPlugin:
         timeline = []
         commits = self.get_commits_in_range(repo, start_datetime, end_datetime)
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
+        # TODO(mitch): fix this for neovim
         for commit_num, commit in tqdm(enumerate(commits), total=len(commits)):
             timestep = []
             for changed_file in previous_commit.diff(commit):
