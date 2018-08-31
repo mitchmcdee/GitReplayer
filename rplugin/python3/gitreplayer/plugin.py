@@ -48,7 +48,7 @@ class GitReplayer:
         self.timeline = timeline[1:]
         # GitReplayer(timeline, parsed_args.playback_speed).play
 
-    def get_commits_in_range(repo, start_datetime, end_datetime):
+    def get_commits_in_range(self, repo, start_datetime, end_datetime):
         """
         Get commits from oldest to newest and filter out those outside the given range.
         """
@@ -77,7 +77,7 @@ class GitReplayer:
         is the starting state.
         """
         timeline = []
-        commits = self.get_commits(repo, start_datetime, end_datetime)
+        commits = self.get_commits_in_range(repo, start_datetime, end_datetime)
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
         for commit_num, commit in tqdm(enumerate(commits), total=len(commits)):
             timestep = []
