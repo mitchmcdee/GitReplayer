@@ -12,7 +12,7 @@ from datetime import datetime
 from difflib import unified_diff
 from tqdm import tqdm
 from .parser import GitReplayerParser
-from util import get_blob_as_splitlines, is_blob_file_in_regex
+from .util import get_blob_as_splitlines, is_blob_file_in_regex
 
 
 # Git's magic empty tree sha1 hash.
