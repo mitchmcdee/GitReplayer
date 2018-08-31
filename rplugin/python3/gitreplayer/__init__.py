@@ -1,1 +1,1 @@
-from .plugin import GitReplayer
+from .plugin import GitReplayerPlugin
