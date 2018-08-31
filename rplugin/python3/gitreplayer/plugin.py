@@ -12,7 +12,7 @@ from datetime import datetime
 from difflib import unified_diff
 from tqdm import tqdm
 from .parser import GitReplayerParser
-from .util import get_blob_as_splitlines, is_blob_file_in_regex
+from .util import get_blob_as_splitlines, is_diff_file_in_regex
 
 
 # Git's magic empty tree sha1 hash.
@@ -83,7 +83,7 @@ class GitReplayer:
             timestep = []
             for changed_file in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid regex.
-                if commit_num == 0 or is_blob_file_in_regex(changed_file, file_regex):
+                if commit_num == 0 or is_diff_file_in_regex(changed_file, file_regex):
                     timestep.append(changed_file)
             # First entry in timeline is the current state, so ignore if empty.
             if commit_num == 0 or len(timestep) != 0:
