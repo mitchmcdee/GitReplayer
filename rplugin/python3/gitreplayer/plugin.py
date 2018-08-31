@@ -19,7 +19,7 @@ DEFAULT_PLAYBACK_SPEED = 1000
 MAGIC_EMPTY_TREE_HASH = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 @neovim.plugin
-class GitReplayer:
+class GitReplayer(object):
     '''
     TODO(mitch): write this.
     '''
