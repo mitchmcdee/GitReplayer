@@ -61,21 +61,22 @@ class GitReplayerPlugin:
                 # TODO(mitch): explain why removing one is necessary
                 if a_num_lines != 0:
                     current_line_num -= 1
-                # Jump to current line
+                # Jump to current line.
                 self.nvim.command(str(current_line_num))
             elif change_type == "+":
                 added_line = line[1:]
                 self.files[file_path].insert(current_line_num, added_line)
-                # TODO(mitch): add line and write chars in neovim
-                self.nvim.current.buffer.append('', current_line_num)
+                # TODO(mitch): work out why previous lines are being erased
+                self.nvim.current.buffer.append(' ', current_line_num)
                 current_line_num += 1
+                # Write out all chars in added line.
                 for i in range(len(added_line)):
                     self.nvim.current.buffer[current_line_num] = added_line[:i]
                     time.sleep(1 / self.playback_speed)
             elif change_type == "-":
                 self.files[file_path].pop(current_line_num)
-                # TODO(mitch): delete line in neovim
-                # self.nvim.current.buffer[current_line_num:] = [l.strip('\n') for l in self.files[file_path]]
+                # Delete line.
+                self.nvim.current.buffer[current_line_num] = []
             time.sleep(1 / self.playback_speed)
 
     def replay(self):
