@@ -1,25 +1,24 @@
 import neovim
-# import subprocess
-# import sys
-# import argparse
-# import git
-# import re
-# import logging
-# import curses
-# import time
-# from dataclasses import dataclass
-# from datetime import datetime
-# from difflib import unified_diff
-# from tqdm import tqdm
+import subprocess
+import sys
+import argparse
+import git
+import re
+import logging
+import curses
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from difflib import unified_diff
+from tqdm import tqdm
 
 
-# # Constants
-# DEFAULT_PLAYBACK_SPEED = 1000
-# # Git's magic empty tree sha1 hash.
-# MAGIC_EMPTY_TREE_HASH = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+# Git's magic empty tree sha1 hash.
+MAGIC_EMPTY_TREE_HASH = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+
 
 @neovim.plugin
-class GitReplayer(object):
+class GitReplayer:
     '''
     TODO(mitch): write this.
     '''
@@ -36,7 +35,7 @@ class GitReplayer(object):
         self.nvim.current.line = ('Command with args: {}, range: {}'
                                   .format(args, range))
 
-    @neovim.autocmd('GitRepoEnter', pattern='*.git', sync=True)
+    @neovim.autocmd('VimEnter', pattern='*.git', sync=True)
     def on_git_repo_enter(self, filename):
         self.nvim.out_write('testplugin is in ' + filename + '\n')
 
@@ -226,84 +225,12 @@ class GitReplayer(object):
 #                 break
 
 
-# def valid_datetime(datetime_string):
-#     """
-#     Attempts to conver the given datetime string to a datetime object. If successful,
-#     returns the datetime object, else raises ArgumentTypeError.
-#     """
-#     try:
-#         return datetime.strptime(datetime_string, "%d/%m/%Y %H:%M:%S %Z")
-#     except ValueError:
-#         raise argparse.ArgumentTypeError(f"Not a valid datetime: {datetime_string}")
-
-
-# def valid_regex(regex_string):
-#     """
-#     Attempts to compile the given regex string. If successful, returns the string
-#     in its raw form, else raises ArgumentTypeError.
-#     """
-#     try:
-#         re.compile(regex_string)
-#     except re.error:
-#         raise argparse.ArgumentTypeError(f"Not valid regex: {regex_string}")
-#     return fr"{regex_string}"
-
-
 # def main():
-#     arg_parser = argparse.ArgumentParser()
-#     arg_parser.add_argument(
-#         "-r",
-#         "--repo-path",
-#         dest="repo_path",
-#         required=True,
-#         help="Path to repo to visualise e.g. /path/to/repo",
-#     )
-#     arg_parser.add_argument(
-#         "-s",
-#         "--start-datetime",
-#         dest="start_datetime",
-#         type=valid_datetime,
-#         nargs="?",
-#         default=datetime.min,
-#         help='Start with the first entry after the supplied datetime e.g. "DD/MM/YYYY hh:mm:ss tz"',
-#     )
-#     arg_parser.add_argument(
-#         "-e",
-#         "--end-datetime",
-#         dest="end_datetime",
-#         type=valid_datetime,
-#         nargs="?",
-#         default=datetime.max,
-#         help='End after the first entry after the supplied datetime e.g. "DD/MM/YYYY hh:mm:ss tz"',
-#     )
-#     arg_parser.add_argument(
-#         "-f",
-#         "--file-regex",
-#         dest="file_regex",
-#         type=valid_regex,
-#         nargs="?",
-#         default=r".*",
-#         help='Only visualise files whose relative filepath matches the given regex e.g. "test/*.txt"',
-#     )
-#     arg_parser.add_argument(
-#         "-p",
-#         "--playback-speed",
-#         dest="playback_speed",
-#         type=int,
-#         nargs="?",
-#         default=DEFAULT_PLAYBACK_SPEED,
-#         help="The initial playback speed in characters per second",
-#     )
-#     # subprocess.run('nvim')
-#     parsed_args = arg_parser.parse_args(sys.argv[1:])
-#     repo = git.Repo(parsed_args.repo_path)
-#     window = Window(parsed_args.start_datetime, parsed_args.end_datetime)
-#     print("Processing git timeline...")
-#     timeline = get_timeline(repo, window, parsed_args.file_regex)
-#     print("Starting GitReplayer...")
-#     curses.wrapper(GitReplayer(timeline, parsed_args.playback_speed).play)
-#     print("Finished!")
-
-
-# if __name__ == "__main__":
-#     main()
+    # parsed_args = arg_parser.parse_args(sys.argv[1:])
+    # repo = git.Repo(parsed_args.repo_path)
+    # window = Window(parsed_args.start_datetime, parsed_args.end_datetime)
+    # print("Processing git timeline...")
+    # timeline = get_timeline(repo, window, parsed_args.file_regex)
+    # print("Starting GitReplayer...")
+    # curses.wrapper(GitReplayer(timeline, parsed_args.playback_speed).play)
+    # print("Finished!")
