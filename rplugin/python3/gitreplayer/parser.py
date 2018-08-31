@@ -1,6 +1,7 @@
 '''
 Parser class
 '''
+import git
 import re
 import argparse
 from datetime import datetime
@@ -18,7 +19,7 @@ def valid_datetime(datetime_string):
     try:
         return datetime.strptime(datetime_string, "%d/%m/%Y %H:%M:%S %Z")
     except ValueError:
-        raise argparse.ArgumentTypeError(f"Not a valid datetime: {datetime_string}")
+        raise argparse.ArgumentTypeError(f"Invalid datetime: {datetime_string}")
 
 
 def valid_regex(regex_string):
@@ -29,8 +30,20 @@ def valid_regex(regex_string):
     try:
         re.compile(regex_string)
     except re.error:
-        raise argparse.ArgumentTypeError(f"Not valid regex: {regex_string}")
+        raise argparse.ArgumentTypeError(f"Invalid regex: {regex_string}")
     return fr"{regex_string}"
+
+
+def valid_repo(repo_string):
+    """
+    Determines whether the given repo string is a valid repo
+    """
+    try:
+        return git.Repo(repo_string)
+    except git.InvalidGitRepositoryError:
+        raise argparse.ArgumentTypeError(f"Invalid git repo: {repo_string}")
+    except git.NoSuchPathError:
+        raise argparse.ArgumentTypeError(f"Invalid repo path: {repo_string}")
 
 
 class GitReplayerParser(argparse.ArgumentParser):
@@ -44,6 +57,7 @@ class GitReplayerParser(argparse.ArgumentParser):
             "-r",
             "--repo-path",
             dest="repo_path",
+            type=valid_repo,
             required=True,
             help="Path to repo to visualise e.g. /path/to/repo",
         )
