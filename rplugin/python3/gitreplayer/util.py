@@ -1,4 +1,5 @@
 import re
+from difflib import unified_diff
 from git.objects.blob import Blob
 from git.diff import Diff
 

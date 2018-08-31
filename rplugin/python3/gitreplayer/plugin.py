@@ -1,15 +1,9 @@
 import neovim
 import subprocess
 import sys
-import argparse
 import git
-import re
-import logging
-import curses
 import time
-from dataclasses import dataclass
 from datetime import datetime
-from difflib import unified_diff
 from tqdm import tqdm
 from .parser import GitReplayerParser
 from .util import (MAGIC_EMPTY_TREE_HASH, get_blob_as_splitlines, is_diff_file_in_regex, get_hunk_values, get_file_diff)
@@ -40,6 +34,7 @@ class GitReplayerPlugin:
         start_datetime = parsed_args.start_datetime
         end_datetime = parsed_args.end_datetime
         self.playback_speed = parsed_args.playback_speed
+        print('waiting')
         timeline = self.get_timeline(repo, start_datetime, end_datetime, file_regex)
         if len(timeline) == 0:
             print('No commits in git repo to process.')
@@ -50,6 +45,7 @@ class GitReplayerPlugin:
         }
         # Commits to visualise.
         self.timeline = timeline[1:]
+        print('hey')
         self.replay()
 
     def draw_file_changes(self, file):
@@ -86,6 +82,7 @@ class GitReplayerPlugin:
         """
         # TODO(mitch): replace curses with vim for syntax highlighting and nicer text handling?
         while True:
+            print('hi')
             self.files = self.initial_files
             # For each timestep, play back the changed lines in affected files.
             for timestep in self.timeline:
