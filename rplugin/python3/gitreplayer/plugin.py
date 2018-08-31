@@ -32,11 +32,11 @@ class GitReplayer:
         return 3
 
     @neovim.command('TestPrint')
-    def testcommand(self):
+    def testprint(self):
         self.nvim.current.line = f'{self.count}'
 
     @neovim.command('TestInc')
-    def testcommand(self):
+    def testinc(self):
         self.count += 1
 
     @neovim.autocmd('VimEnter', pattern='*.git', sync=True)
