@@ -67,13 +67,15 @@ class GitReplayerPlugin:
                 added_line = line[1:]
                 self.files[file_path].insert(current_line_num, added_line)
                 # TODO(mitch): add line and write chars in neovim
-                # self.screen.insertln()
-                # for char in added_line:
-                #     time.sleep(1 / self.playback_speed)
+                self.nvim.current.buffer.append('', current_line_num)
                 current_line_num += 1
+                for i in range(len(added_line)):
+                    self.nvim.current.buffer[current_line_num] = added_line[:i]
+                    time.sleep(1 / self.playback_speed)
             elif change_type == "-":
                 self.files[file_path].pop(current_line_num)
                 # TODO(mitch): delete line in neovim
+                # self.nvim.current.buffer[current_line_num:] = [l.strip('\n') for l in self.files[file_path]]
             time.sleep(1 / self.playback_speed)
 
     def replay(self):
