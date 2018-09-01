@@ -3,6 +3,7 @@ import subprocess
 import sys
 import time
 from git import Repo
+from git.objects.base import Object
 from git.objects.commit import Commit
 from datetime import datetime
 from tqdm import tqdm
@@ -171,7 +172,8 @@ class GitReplayerPlugin:
                 if commit_num != 0:
                     commits.append(chronological_commits[commit_num - 1])
                 else:
-                    commits.append(Commit(repo, b'\0' * 20, tree=MAGIC_EMPTY_TREE_HASH))
+                    null_tree = repo.tree(MAGIC_EMPTY_TREE_HASH)
+                    commits.append(Commit(repo, Object.NULL_BIN_SHA, tree=null_tree))
             commits.append(commit)
         return commits
 
