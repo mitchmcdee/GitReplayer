@@ -31,26 +31,26 @@ class GitReplayerPlugin:
     # TODO(mitch): support play, pause, restart, quit, speed up/down, forward/back timestep commands
     # TODO(mitch): setup state for ^^^
 
-    @neovim.command('GitReplayerIncrementSpeedSmall', sync=True)
+    @neovim.command('GitReplayerIncrementSpeedSmall')
     def on_git_replayer_increment_speed_small(self):
         if not self.initialised:
             return
         self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_SMALL
 
-    @neovim.command('GitReplayerIncrementSpeedLarge', sync=True)
+    @neovim.command('GitReplayerIncrementSpeedLarge')
     def on_git_replayer_increment_speed_large(self):
         if not self.initialised:
             return
         self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
 
-    @neovim.command('GitReplayerDecrementSpeedSmall', sync=True)
+    @neovim.command('GitReplayerDecrementSpeedSmall')
     def on_git_replayer_decrement_speed_small(self):
         if not self.initialised:
             return
         decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_SMALL
         self.playback_speed = max(0, decremented_speed)
 
-    @neovim.command('GitReplayerDecrementSpeedLarge', sync=True)
+    @neovim.command('GitReplayerDecrementSpeedLarge')
     def on_git_replayer_decrement_speed_large(self):
         if not self.initialised:
             return
