@@ -38,8 +38,14 @@ class GitReplayerPlugin:
     # TODO(mitch): setup state for ^^^
     # TODO(mitch): add support for filtering by users?
 
+    @neovim.command("GitReplayerSetSpeed", nargs=1)
+    def on_set_speed(self, args):
+        if len(args) != 1:
+            return
+        self.playback_speed = args[0]
+
     @neovim.command("GitReplayerInit", nargs="*")
-    def on_git_replayer_init(self, args):
+    def on_init(self, args):
         """
         Initialise replayer.
         """
