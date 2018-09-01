@@ -56,7 +56,7 @@ class GitReplayerPlugin:
         """
         file_path = file.b_path or file.a_path
         file_name = file_path.split('/')[-1]
-        file_type = guess_lexer_for_filename(file_name).name
+        file_type = guess_lexer_for_filename(file_name, '').name
         self.nvim.command(f'set filetype={file_type}')
         self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
         for line in get_file_diff(file):
