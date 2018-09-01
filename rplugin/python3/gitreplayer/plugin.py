@@ -57,7 +57,7 @@ class GitReplayerPlugin:
         decremented_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
         self.playback_speed = min(0, decremented_speed)
 
-    @neovim.command('GitReplayerInit', nargs='*')
+    @neovim.command('GitReplayerInit', nargs='*', sync=True)
     def on_git_replayer_init(self, args):
         '''
         Initialise replayer.
@@ -119,7 +119,7 @@ class GitReplayerPlugin:
         for i in range(len(added_line)):
             self.nvim.current.buffer[line_num] = added_line[:i]
             window.cursor = (cursor_y, i)
-            time.sleep(1 / self.playback_speed)
+            self.simulate_delay()
 
     def handle_line_removal(self, file_path, line_num):
         '''
@@ -127,6 +127,13 @@ class GitReplayerPlugin:
         '''
         self.files[file_path].pop(line_num)
         del self.nvim.current.buffer[line_num]
+
+    def simulate_delay(self):
+        '''
+        Simulates the delay between keyboard actions.
+        '''
+        delay = max(1 / self.playback_speed, sys.float_info.epsilon)
+        time.sleep(delay)
 
     def draw_file_changes(self, file):
         """
@@ -146,7 +153,7 @@ class GitReplayerPlugin:
                 self.handle_line_removal(file_path, current_line_num)
             # Jump to current line.
             self.nvim.command(str(current_line_num))
-            time.sleep(1 / self.playback_speed)
+            self.simulate_delay()
 
     def update_metadata(self, time, author, file):
         '''
