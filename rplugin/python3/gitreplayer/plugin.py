@@ -185,7 +185,8 @@ class GitReplayerPlugin:
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
         # TODO(mitch): fix this for neovim
         # TODO(mitch): try to make faster?
-        for commit_num, commit in tqdm(list(enumerate(commits)), file=TqdmOutput()):
+        tqdm_output = TqdmOutput(self.nvim)
+        for commit_num, commit in tqdm(list(enumerate(commits)), file=tqdm_output):
             timestep = []
             for changed_file in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid regex.
