@@ -183,8 +183,6 @@ class GitReplayerPlugin:
         timeline = []
         commits = self.get_commits_in_range(repo, start_datetime, end_datetime)
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
-        # TODO(mitch): fix this for neovim
-        # TODO(mitch): try to make faster?
         tqdm_output = TqdmOutput(self.nvim)
         for commit_num, commit in tqdm(list(enumerate(commits)), file=tqdm_output):
             timestep = []
