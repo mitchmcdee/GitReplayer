@@ -77,11 +77,10 @@ class GitReplayerPlugin:
         self.files[file_path].insert(line_num, added_line)
         self.nvim.current.buffer.append('', line_num)
         # Jump to appended line.
-        self.nvim.command(str(line_num + 1))
+        self.nvim.command(str(line_num))
         # Write out all chars in added line.
         for i in range(len(added_line)):
             self.nvim.current.buffer[line_num] = added_line[:i]
-            self.nvim.command('$')
             time.sleep(1 / self.playback_speed)
 
     def handle_line_removal(self, line_num):
