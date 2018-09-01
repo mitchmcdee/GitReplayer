@@ -2,7 +2,7 @@ import neovim
 import subprocess
 import sys
 import time
-from multiprocessing.threading import Lock
+from multiprocessing import Lock
 from git import Repo
 from git.objects.commit import Commit
 from datetime import datetime
