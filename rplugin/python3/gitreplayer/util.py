@@ -2,10 +2,28 @@ import re
 from difflib import unified_diff
 from git.objects.blob import Blob
 from git.diff import Diff
+import io
 
 
 # Git's magic empty tree sha1 hash.
 MAGIC_EMPTY_TREE_HASH = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+
+
+class TqdmOutput(io.StringIO):
+    """
+    Output stream for TQDM which will output to logger module instead of
+    the stdout.
+    """
+    buf = ''
+    def __init__(self, nvim):
+        super().__init__()
+        self.nvim = nvim
+
+    def write(self, buf):
+        self.buf = buf.strip('\r\n\t ')
+
+    def flush(self):
+        self.nvim.out_write(self.buf)
 
 
 def get_blob_as_splitlines(blob: Blob):

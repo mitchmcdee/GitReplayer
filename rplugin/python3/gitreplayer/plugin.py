@@ -9,7 +9,7 @@ from tqdm import tqdm
 from pygments.lexers import guess_lexer_for_filename
 from pygments.util import ClassNotFound
 from .parser import GitReplayerParser
-from .util import (MAGIC_EMPTY_TREE_HASH, get_blob_as_splitlines, is_diff_file_in_regex, get_current_line, get_file_diff)
+from .util import (TqdmOutput, MAGIC_EMPTY_TREE_HASH, get_blob_as_splitlines, is_diff_file_in_regex, get_current_line, get_file_diff)
 
 
 @neovim.plugin
@@ -29,7 +29,7 @@ class GitReplayerPlugin:
     @neovim.command('InitGitReplayer', nargs='*')
     def on_init_git_replayer(self, args):
         '''
-        TODO(mitch): explain this.
+        Initialise replayer.
         '''
         parsed_args = GitReplayerParser().parse_args(args)
         repo = Repo(parsed_args.repo_path)
@@ -122,9 +122,8 @@ class GitReplayerPlugin:
         '''
         file_path = file.b_path or file.a_path
         metadata = f'Commit {time} of {len(self.timeline)}' \
-                   + f' - Playback speed at {self.playback_speed}' \
-                   + f' - Current file is {file_path}' \
-                   + f' - Current author is {author}'
+                   + f' - Playing at {self.playback_speed} chars/second' \
+                   + f' - {file_path} ({author})'
         self.nvim.command(f'file {metadata}')
 
     def replay(self):
@@ -186,7 +185,7 @@ class GitReplayerPlugin:
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
         # TODO(mitch): fix this for neovim
         # TODO(mitch): try to make faster?
-        for commit_num, commit in tqdm(enumerate(commits), total=len(commits)):
+        for commit_num, commit in tqdm(list(enumerate(commits)), file=TqdmOutput()):
             timestep = []
             for changed_file in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid regex.
