@@ -78,11 +78,11 @@ class GitReplayerPlugin:
         self.nvim.current.buffer.append('', line_num)
         # Jump to appended line.
         self.nvim.command(str(line_num + 1))
-        _, cursor_y = self.nvim.api.nvim_win_get_cursor(self.nvim.current)
+        _, cursor_y = self.nvim.api.nvim_win_get_cursor(self.nvim.current.number)
         # Write out all chars in added line.
         for i in range(len(added_line)):
             self.nvim.current.buffer[line_num] = added_line[:i]
-            self.nvim.api.nvim_win_set_cursor(self.nvim.current, (i, cursor_y))
+            self.nvim.api.nvim_win_set_cursor(self.nvim.current.number, (i, cursor_y))
             time.sleep(1 / self.playback_speed)
 
     def handle_line_removal(self, line_num):
@@ -172,6 +172,7 @@ class GitReplayerPlugin:
         commits = self.get_commits_in_range(repo, start_datetime, end_datetime)
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
         # TODO(mitch): fix this for neovim
+        # TODO(mitch): try to make faster?
         for commit_num, commit in tqdm(enumerate(commits), total=len(commits)):
             timestep = []
             for changed_file in previous_commit.diff(commit):
