@@ -60,7 +60,7 @@ class GitReplayerPlugin:
         try:
             file_type = guess_lexer_for_filename(file_name, '').name
             self.nvim.command(f'set filetype={file_type}')
-        except pygments.util.ClassNotFound:
+        except ClassNotFound:
             pass
         self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
         for line in get_file_diff(file):
