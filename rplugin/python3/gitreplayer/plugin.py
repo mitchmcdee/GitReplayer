@@ -5,7 +5,7 @@ import git
 import time
 from datetime import datetime
 from tqdm import tqdm
-from pygments.lexer import guess_lexer_for_filename
+from pygments.lexers import guess_lexer_for_filename
 from .parser import GitReplayerParser
 from .util import (MAGIC_EMPTY_TREE_HASH, get_blob_as_splitlines, is_diff_file_in_regex, get_hunk_values, get_file_diff)
 
