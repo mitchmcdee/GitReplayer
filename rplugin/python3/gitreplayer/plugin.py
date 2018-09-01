@@ -51,18 +51,51 @@ class GitReplayerPlugin:
         print('hey')
         self.replay()
 
+    def set_filetype(self, file_path):
+        '''
+        Sets the filetype in neovim based off of the filename.
+        '''
+        file_name = file_path.split('/')[-1]
+        file_contents = ''.join(self.files[file_path])
+        try:
+            file_type = guess_lexer_for_filename(file_name, file_contents).name
+            self.nvim.command(f'set filetype={file_type}')
+        except ClassNotFound:
+            pass
+
+    def load_file(self, file_path):
+        '''
+        Loads the given file into the current buffer.
+        '''
+        # Neovim doesn't like newlines.
+        self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
+
+    def handle_line_addition(self, line):
+        '''
+        Handles encountering a '+' diff and write out the new line.
+        '''
+        added_line = line[1:]
+        self.files[file_path].insert(current_line_num, added_line)
+        self.nvim.current.buffer.append('', current_line_num)
+        # Write out all chars in added line.
+        for i in range(len(added_line)):
+            self.nvim.current.buffer[current_line_num] = added_line[:i]
+            time.sleep(1 / self.playback_speed)
+
+    def handle_line_removal(self, line_num):
+        '''
+        Handles encountering a '-' diff and removes the current line.
+        '''
+        self.files[file_path].pop(line_num)
+        del self.nvim.current.buffer[line_num]
+
     def draw_file_changes(self, file):
         """
         Draws the file changes to the screen.
         """
         file_path = file.b_path or file.a_path
-        file_name = file_path.split('/')[-1]
-        try:
-            file_type = guess_lexer_for_filename(file_name, '').name
-            self.nvim.command(f'set filetype={file_type}')
-        except ClassNotFound:
-            pass
-        self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
+        self.set_filetype(file_path)
+        self.load_file(file_path)
         for line in get_file_diff(file):
             change_type = line[0]
             if change_type == "@":
@@ -71,17 +104,10 @@ class GitReplayerPlugin:
                 if a_num_lines != 0:
                     current_line_num -= 1
             elif change_type == "+":
-                added_line = line[1:]
-                self.files[file_path].insert(current_line_num, added_line)
-                self.nvim.current.buffer.append('', current_line_num)
-                # Write out all chars in added line.
-                for i in range(len(added_line)):
-                    self.nvim.current.buffer[current_line_num] = added_line[:i]
-                    time.sleep(1 / self.playback_speed)
+                self.handle_line_addition(line)
                 current_line_num += 1
             elif change_type == "-":
-                self.files[file_path].pop(current_line_num)
-                del self.nvim.current.buffer[current_line_num]
+                self.handle_line_removal(current_line_num)
             # Jump to current line.
             self.nvim.command(str(current_line_num))
             time.sleep(1 / self.playback_speed)
