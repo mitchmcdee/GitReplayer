@@ -26,10 +26,6 @@ class GitReplayerPlugin:
     being written in pseudo-realtime in order of the commit timeline.
     """
 
-    # Playback speed constants
-    PLAYBACK_SPEED_JUMP_SMALL = 10
-    PLAYBACK_SPEED_JUMP_LARGE = 100
-
     def __init__(self, nvim):
         self.nvim = nvim
 
@@ -40,9 +36,8 @@ class GitReplayerPlugin:
 
     @neovim.command("GitReplayerSetSpeed", nargs=1)
     def on_set_speed(self, args):
-        if len(args) != 1:
-            return
-        self.playback_speed = int(args[0])
+        playback_speed = args[0]
+        self.playback_speed = int(playback_speed)
 
     @neovim.command("GitReplayerInit", nargs="*")
     def on_init(self, args):
