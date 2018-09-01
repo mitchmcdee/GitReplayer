@@ -76,6 +76,8 @@ class GitReplayerPlugin:
         added_line = line[1:]
         self.files[file_path].insert(line_num, added_line)
         self.nvim.current.buffer.append('', line_num)
+        # Jump to appended line.
+        self.nvim.command(str(current_line_num + 1))
         # Write out all chars in added line.
         for i in range(len(added_line)):
             self.nvim.current.buffer[line_num] = added_line[:i]
