@@ -39,10 +39,10 @@ def get_file_diff(diff: Diff):
 
 def get_current_line(header_line):
     """
-    Parses the chunk header and returns what the current line will be.
+    Parses the chunk header line and returns what the current line will be.
     """
     # Strip unnecessary characters, convert to integer.
-    _, after = header[3:-3].split()
+    _, after = header_line[3:-3].split()
     current_line_num, *num_lines_after = list(map(int, after[1:].split(",")))
     num_lines_after = int(num_lines_after[0]) if num_lines_after else 1
     # TODO(mitch): explain why removing one is necessary
