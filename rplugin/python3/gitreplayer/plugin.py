@@ -79,14 +79,14 @@ class GitReplayerPlugin:
         window = self.nvim.current.window
         height = window.height
         width = window.width
-        _, cursor_y = window.cursor
+        cursor_y, _ = window.cursor
         # Write out all chars in added line.
         for i in range(len(added_line)):
             self.nvim.current.buffer[line_num] = added_line[:i]
             wrapped_x = i % width
             wrapped_y = i // width
-            # self.nvim.out_write(f'{window.cursor} | {cursor_y + wrapped_y}, {wrapped_x}\n')
-            window.cursor = (cursor_y + wrapped_y, wrapped_x)
+            self.nvim.out_write(f'{window.cursor} | {cursor_y + wrapped_y}, {wrapped_x}\n')
+            # window.cursor = (cursor_y + wrapped_y, wrapped_x)
             time.sleep(1 / self.playback_speed)
 
     def handle_line_removal(self, file_path, line_num):
