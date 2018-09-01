@@ -37,28 +37,28 @@ class GitReplayerPlugin:
     def on_git_replayer_increment_speed_small(self):
         if not self.initialised:
             return
-        incremented_speed = self.playback_speed + PLAYBACK_SPEED_JUMP_SMALL
+        incremented_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_SMALL
         self.playback_speed = max(self.MAX_PLAYBACK_SPEED, incremented_speed)
 
     @neovim.command('GitReplayerIncrementSpeedLarge', sync=True)
-    def on_git_replayer_increment_speed_small(self):
+    def on_git_replayer_increment_speed_large(self):
         if not self.initialised:
             return
-        incremented_speed = self.playback_speed + PLAYBACK_SPEED_JUMP_LARGE
+        incremented_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
         self.playback_speed = max(self.MAX_PLAYBACK_SPEED, incremented_speed)
 
     @neovim.command('GitReplayerDecrementSpeedSmall', sync=True)
     def on_git_replayer_decrement_speed_small(self):
         if not self.initialised:
             return
-        decremented_speed = self.playback_speed + PLAYBACK_SPEED_JUMP_SMALL
+        decremented_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_SMALL
         self.playback_speed = max(self.MAX_PLAYBACK_SPEED, decremented_speed)
 
     @neovim.command('GitReplayerDecrementSpeedLarge', sync=True)
-    def on_git_replayer_decrement_speed_small(self):
+    def on_git_replayer_decrement_speed_large(self):
         if not self.initialised:
             return
-        decremented_speed = self.playback_speed + PLAYBACK_SPEED_JUMP_LARGE
+        decremented_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
         self.playback_speed = max(self.MAX_PLAYBACK_SPEED, decremented_speed)
 
     @neovim.command('GitReplayerInit', nargs='*')
