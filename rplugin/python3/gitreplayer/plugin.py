@@ -132,7 +132,7 @@ class GitReplayerPlugin:
         '''
         Simulates the delay between keyboard actions.
         '''
-        time.sleep(1 / max(self.playback_speed, 1e6))
+        time.sleep(1 / max(self.playback_speed, 1e-6))
 
     def draw_file_changes(self, file):
         """
