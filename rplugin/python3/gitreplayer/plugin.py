@@ -2,7 +2,7 @@ import neovim
 import subprocess
 import sys
 import time
-from multiprocessing import Lock
+from multiprocessing import Thread
 from git import Repo
 from git.objects.commit import Commit
 from datetime import datetime
@@ -25,7 +25,6 @@ class GitReplayerPlugin:
     PLAYBACK_SPEED_JUMP_LARGE = 100
 
     def __init__(self, nvim):
-        self.lock = Lock()
         self.nvim = nvim
         self.initialised = False
 
@@ -34,37 +33,33 @@ class GitReplayerPlugin:
     # TODO(mitch): support play, pause, restart, quit, speed up/down, forward/back timestep commands
     # TODO(mitch): setup state for ^^^
 
-    @neovim.command('GitReplayerIncrementSpeedSmall')
+    @neovim.command('GitReplayerIncrementSpeedSmall', sync=True)
     def on_git_replayer_increment_speed_small(self):
         if not self.initialised:
             return
-        with self.lock:
-            self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_SMALL
+        self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_SMALL
 
-    @neovim.command('GitReplayerIncrementSpeedLarge')
+    @neovim.command('GitReplayerIncrementSpeedLarge', sync=True)
     def on_git_replayer_increment_speed_large(self):
         if not self.initialised:
             return
-        with self.lock:
-            self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
+        self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
 
-    @neovim.command('GitReplayerDecrementSpeedSmall')
+    @neovim.command('GitReplayerDecrementSpeedSmall', sync=True)
     def on_git_replayer_decrement_speed_small(self):
         if not self.initialised:
             return
-        with self.lock:
-            decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_SMALL
-            self.playback_speed = max(0, decremented_speed)
+        decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_SMALL
+        self.playback_speed = max(0, decremented_speed)
 
-    @neovim.command('GitReplayerDecrementSpeedLarge')
+    @neovim.command('GitReplayerDecrementSpeedLarge', sync=True)
     def on_git_replayer_decrement_speed_large(self):
         if not self.initialised:
             return
-        with self.lock:
-            decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_LARGE
-            self.playback_speed = max(0, decremented_speed)
+        decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_LARGE
+        self.playback_speed = max(0, decremented_speed)
 
-    @neovim.command('GitReplayerInit', nargs='*')
+    @neovim.command('GitReplayerInit', nargs='*', allow_nested=True)
     def on_git_replayer_init(self, args):
         '''
         Initialise replayer.
@@ -82,7 +77,11 @@ class GitReplayerPlugin:
         self.load_initial_files(timeline)
         # Commits to visualise, skipping first which is the initial file state.
         self.timeline = timeline[1:]
+        self.current_timestep = 0
+        self.current_filepath = ''
+        self.current_author = ''
         self.initialised = True
+        Thread(target=self.draw_metadata).start()
         self.replay()
 
     def load_initial_files(self, timeline):
@@ -100,7 +99,7 @@ class GitReplayerPlugin:
         file_contents = ''.join(self.files[file_path])
         try:
             file_type = guess_lexer_for_filename(file_name, file_contents).name
-            self.nvim.command(f'set filetype={file_type}')
+            self.nvim.command(f'set filetype={file_type}', async_=True)
         except ClassNotFound:
             pass
 
@@ -119,7 +118,7 @@ class GitReplayerPlugin:
         self.files[file_path].insert(line_num, added_line)
         self.nvim.current.buffer.append('', line_num)
         # Jump to appended line.
-        self.nvim.command(str(line_num + 1))
+        self.nvim.command(str(line_num + 1), async_=True)
         window = self.nvim.current.window
         cursor_y, _ = window.cursor
         # Write out all chars in added line.
@@ -139,8 +138,7 @@ class GitReplayerPlugin:
         '''
         Simulates the delay between keyboard actions.
         '''
-        with self.lock:
-            time.sleep(1 / max(self.playback_speed, 1e-6))
+        time.sleep(1 / max(self.playback_speed, 1e-6))
 
     def draw_file_changes(self, file):
         """
@@ -159,18 +157,18 @@ class GitReplayerPlugin:
             elif change_type == "-":
                 self.handle_line_removal(file_path, current_line_num)
             # Jump to current line.
-            self.nvim.command(str(current_line_num))
+            self.nvim.command(str(current_line_num), async_=True)
             self.simulate_delay()
 
-    def update_metadata(self, time, author, file):
+    def draw_metadata(self):
         '''
-        Draws the current timestep metadata to neovim through setting a "filename".
+        Thread loop that displays the current metadata state.
         '''
-        file_path = file.b_path or file.a_path
-        metadata = f'Commit {time} of {len(self.timeline)}' \
-                   + f' - Playing at {self.playback_speed} chars/second' \
-                   + f' - {file_path} ({author})'
-        self.nvim.command(f'file {metadata}')
+        while True:
+            metadata = f'Commit {time} of {len(self.timeline)}' \
+                       + f' - Playing at {self.playback_speed} chars/second' \
+                       + f' - {self.file_path} ({self.author})'
+            self.nvim.command(f'file {metadata}', async_=True)
 
     def replay(self):
         """
@@ -181,6 +179,10 @@ class GitReplayerPlugin:
             # For each timestep, play back the changed lines in affected files.
             for time, (author, timestep) in enumerate(self.timeline):
                 for file in timestep:
+                    # Update current metadata
+                    self.current_filepath = file.b_path or file.a_path
+                    self.current_timestep = time
+                    self.current_author = author
                     # Move renamed files
                     if file.renamed_file:
                         self.files[file.b_path] = self.files[file.a_path]
@@ -188,8 +190,7 @@ class GitReplayerPlugin:
                     # Add new files
                     if file.new_file:
                         self.files[file.b_path] = []
-                    # Draw file changes and timestep metadata
-                    self.update_metadata(time, author, file)
+                    # Draw file changes
                     self.draw_file_changes(file)
                     # Remove deleted files
                     if file.deleted_file:
