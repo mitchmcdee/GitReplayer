@@ -85,9 +85,8 @@ class GitReplayerPlugin:
             self.nvim.current.buffer[line_num] = added_line[:i]
             wrapped_x = i % width
             wrapped_y = i // width
-            # Make one-indexed.
-            self.nvim.out_write(f'{window.cursor} | {wrapped_x}, {cursor_y + wrapped_y}\n')
-            # window.cursor = (wrapped_x, cursor_y + wrapped_y)
+            # self.nvim.out_write(f'{window.cursor} | {cursor_y + wrapped_y}, {wrapped_x}\n')
+            window.cursor = (cursor_y + wrapped_y, cursor_x)
             time.sleep(1 / self.playback_speed)
 
     def handle_line_removal(self, file_path, line_num):
