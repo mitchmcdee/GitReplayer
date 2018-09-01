@@ -2,7 +2,6 @@ import neovim
 import subprocess
 import sys
 import time
-from threading import Thread
 from git import Repo
 from git.objects.commit import Commit
 from datetime import datetime
@@ -25,41 +24,13 @@ class GitReplayerPlugin:
     PLAYBACK_SPEED_JUMP_LARGE = 100
 
     def __init__(self, nvim):
-        self.nvim = nvim
-        self.initialised = False
+        self.lock = Lock()
 
-    # TODO(mitch): work out async issues
     # TODO(mitch): setup neovim keypresses \/ \/ \/
     # TODO(mitch): support play, pause, restart, quit, speed up/down, forward/back timestep commands
     # TODO(mitch): setup state for ^^^
 
-    @neovim.command('GitReplayerIncrementSpeedSmall')
-    def on_git_replayer_increment_speed_small(self):
-        if not self.initialised:
-            return
-        self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_SMALL
-
-    @neovim.command('GitReplayerIncrementSpeedLarge')
-    def on_git_replayer_increment_speed_large(self):
-        if not self.initialised:
-            return
-        self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
-
-    @neovim.command('GitReplayerDecrementSpeedSmall')
-    def on_git_replayer_decrement_speed_small(self):
-        if not self.initialised:
-            return
-        decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_SMALL
-        self.playback_speed = max(0, decremented_speed)
-
-    @neovim.command('GitReplayerDecrementSpeedLarge')
-    def on_git_replayer_decrement_speed_large(self):
-        if not self.initialised:
-            return
-        decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_LARGE
-        self.playback_speed = max(0, decremented_speed)
-
-    @neovim.command('GitReplayerInit', nargs='*', allow_nested=True)
+    @neovim.command('GitReplayerInit', nargs='*')
     def on_git_replayer_init(self, args):
         '''
         Initialise replayer.
@@ -77,11 +48,6 @@ class GitReplayerPlugin:
         self.load_initial_files(timeline)
         # Commits to visualise, skipping first which is the initial file state.
         self.timeline = timeline[1:]
-        self.current_timestep = 0
-        self.current_filepath = ''
-        self.current_author = ''
-        self.initialised = True
-        Thread(target=self.draw_metadata).start()
         self.replay()
 
     def load_initial_files(self, timeline):
@@ -160,44 +126,37 @@ class GitReplayerPlugin:
             self.nvim.command(str(current_line_num), async_=True)
             self.simulate_delay()
 
-    def draw_metadata(self):
+    def update_metadata(self, time, author, file):
         '''
-        Thread loop that displays the current metadata state.
+        Draws the current timestep metadata to neovim through setting a "filename".
         '''
-        while True:
-            metadata = f'Commit {time} of {len(self.timeline)}' \
-                       + f' - Playing at {self.playback_speed} chars/second' \
-                       + f' - {self.file_path} ({self.author})'
-            self.nvim.command(f'file {metadata}', async_=True)
+        file_path = file.b_path or file.a_path
+        metadata = f'Commit {time} of {len(self.timeline)}' \
+                   + f' - Playing at {self.playback_speed} chars/second' \
+                   + f' - {file_path} ({author})'
+        self.nvim.command(f'file {metadata}', async_=True)
 
     def replay(self):
         """
         Start git repo playback.
         """
-        while True:
-            self.files = self.initial_files
-            # For each timestep, play back the changed lines in affected files.
-            for time, (author, timestep) in enumerate(self.timeline):
-                for file in timestep:
-                    # Update current metadata
-                    self.current_filepath = file.b_path or file.a_path
-                    self.current_timestep = time
-                    self.current_author = author
-                    # Move renamed files
-                    if file.renamed_file:
-                        self.files[file.b_path] = self.files[file.a_path]
-                        del self.files[file.a_path]
-                    # Add new files
-                    if file.new_file:
-                        self.files[file.b_path] = []
-                    # Draw file changes
-                    self.draw_file_changes(file)
-                    # Remove deleted files
-                    if file.deleted_file:
-                        del self.files[file.a_path]
-            #TODO(mitch): fix this loop
-            else:
-                break
+        self.files = self.initial_files
+        # For each timestep, play back the changed lines in affected files.
+        for time, (author, timestep) in enumerate(self.timeline):
+            for file in timestep:
+                # Move renamed files
+                if file.renamed_file:
+                    self.files[file.b_path] = self.files[file.a_path]
+                    del self.files[file.a_path]
+                # Add new files
+                if file.new_file:
+                    self.files[file.b_path] = []
+                # Draw file changes and timestep metadata
+                self.update_metadata(time, author, file)
+                self.draw_file_changes(file)
+                # Remove deleted files
+                if file.deleted_file:
+                    del self.files[file.a_path]
 
     def get_commits_in_range(self, repo, start_datetime, end_datetime):
         """
