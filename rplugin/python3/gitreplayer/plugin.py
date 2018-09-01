@@ -171,7 +171,7 @@ class GitReplayerPlugin:
                 if commit_num != 0:
                     commits.append(chronological_commits[commit_num - 1])
                 else:
-                    commits.append(Commit(repo, MAGIC_EMPTY_TREE_HASH))
+                    commits.append(Commit(repo, b'\0' * 20, tree=MAGIC_EMPTY_TREE_HASH))
             commits.append(commit)
         return commits
 
