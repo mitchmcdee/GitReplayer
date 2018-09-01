@@ -23,7 +23,7 @@ class TqdmOutput(io.StringIO):
         self.buf = buf.strip('\r\n\t ')
 
     def flush(self):
-        self.nvim.out_write(self.buf)
+        self.nvim.current.line = self.buf
 
 
 def get_blob_as_splitlines(blob: Blob):
