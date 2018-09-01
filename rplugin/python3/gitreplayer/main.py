@@ -11,7 +11,7 @@ def main():
     # This will throw a usage error if it cannot be parsed.
     GitReplayerParser().parse_args(replayer_args)
     # Add as a string so that it doesn't interfere with nvim args.
-    subprocess.run(['nvim', '-c', ':InitGitReplayer ' + ' '.join(replayer_args)])
+    subprocess.run(['nvim', '-c', ':GitReplayerInit ' + ' '.join(replayer_args)])
 
 
 if __name__ == "__main__":

@@ -19,15 +19,50 @@ class GitReplayerPlugin:
     being written in pseudo-realtime in order of the commit timeline.
     """
 
+    # Playback speed constants
+    MIN_PLAYBACK_SPEED = 0
+    MAX_PLAYBACK_SPEED = 10000
+    PLAYBACK_SPEED_JUMP_SMALL = 10
+    PLAYBACK_SPEED_JUMP_LARGE = 100
+
     def __init__(self, nvim):
         self.nvim = nvim
+        self.initialised = False
 
     # TODO(mitch): setup neovim keypresses \/ \/ \/
     # TODO(mitch): support play, pause, restart, quit, speed up/down, forward/back timestep commands
     # TODO(mitch): setup state for ^^^
 
-    @neovim.command('InitGitReplayer', nargs='*')
-    def on_init_git_replayer(self, args):
+    @neovim.command('GitReplayerIncrementSpeedSmall', sync=True)
+    def on_git_replayer_increment_speed_small(self):
+        if not self.initialised:
+            return
+        incremented_speed = self.playback_speed + PLAYBACK_SPEED_JUMP_SMALL
+        self.playback_speed = max(self.MAX_PLAYBACK_SPEED, incremented_speed)
+
+    @neovim.command('GitReplayerIncrementSpeedLarge', sync=True)
+    def on_git_replayer_increment_speed_small(self):
+        if not self.initialised:
+            return
+        incremented_speed = self.playback_speed + PLAYBACK_SPEED_JUMP_LARGE
+        self.playback_speed = max(self.MAX_PLAYBACK_SPEED, incremented_speed)
+
+    @neovim.command('GitReplayerDecrementSpeedSmall', sync=True)
+    def on_git_replayer_decrement_speed_small(self):
+        if not self.initialised:
+            return
+        decremented_speed = self.playback_speed + PLAYBACK_SPEED_JUMP_SMALL
+        self.playback_speed = max(self.MAX_PLAYBACK_SPEED, decremented_speed)
+
+    @neovim.command('GitReplayerDecrementSpeedLarge', sync=True)
+    def on_git_replayer_decrement_speed_small(self):
+        if not self.initialised:
+            return
+        decremented_speed = self.playback_speed + PLAYBACK_SPEED_JUMP_LARGE
+        self.playback_speed = max(self.MAX_PLAYBACK_SPEED, decremented_speed)
+
+    @neovim.command('GitReplayerInit', nargs='*')
+    def on_git_replayer_init(self, args):
         '''
         Initialise replayer.
         '''
@@ -44,6 +79,7 @@ class GitReplayerPlugin:
         self.load_initial_files(timeline)
         # Commits to visualise, skipping first which is the initial file state.
         self.timeline = timeline[1:]
+        self.initialised = True
         self.replay()
 
     def load_initial_files(self, timeline):
