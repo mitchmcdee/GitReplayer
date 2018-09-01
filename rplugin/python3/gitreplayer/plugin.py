@@ -1,8 +1,9 @@
 import neovim
 import subprocess
 import sys
-import git
 import time
+from git import Repo
+from git.objects.commit import Commit
 from datetime import datetime
 from tqdm import tqdm
 from pygments.lexers import guess_lexer_for_filename
@@ -31,7 +32,7 @@ class GitReplayerPlugin:
         TODO(mitch): explain this.
         '''
         parsed_args = GitReplayerParser().parse_args(args)
-        repo = git.Repo(parsed_args.repo_path)
+        repo = Repo(parsed_args.repo_path)
         file_regex = parsed_args.file_regex
         start_datetime = parsed_args.start_datetime
         end_datetime = parsed_args.end_datetime
@@ -170,7 +171,7 @@ class GitReplayerPlugin:
                 if commit_num != 0:
                     commits.append(chronological_commits[commit_num - 1])
                 else:
-                    commits.append(repo.tree(MAGIC_EMPTY_TREE_HASH))
+                    commits.append(Commit(repo, MAGIC_EMPTY_TREE_HASH))
             commits.append(commit)
         return commits
 
