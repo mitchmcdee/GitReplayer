@@ -84,7 +84,7 @@ class GitReplayerPlugin:
         _, cursor_y = window.cursor
         # Write out all chars in added line.
         for i in range(len(added_line)):
-            self.nvim.current.buffer[line_num + 1] = added_line[:i]
+            self.nvim.current.buffer[line_num] = added_line[:i]
             wrapped_x = i % width
             wrapped_y = i // width
             self.nvim.err_write(f'{wrapped_x}, {cursor_y + wrapped_y} | {width} {height}')
