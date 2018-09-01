@@ -47,15 +47,15 @@ class GitReplayerPlugin:
     def on_git_replayer_decrement_speed_small(self):
         if not self.initialised:
             return
-        decremented_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_SMALL
-        self.playback_speed = min(0, decremented_speed)
+        decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_SMALL
+        self.playback_speed = max(0, decremented_speed)
 
     @neovim.command('GitReplayerDecrementSpeedLarge', sync=True)
     def on_git_replayer_decrement_speed_large(self):
         if not self.initialised:
             return
-        decremented_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
-        self.playback_speed = min(0, decremented_speed)
+        decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_LARGE
+        self.playback_speed = max(0, decremented_speed)
 
     @neovim.command('GitReplayerInit', nargs='*')
     def on_git_replayer_init(self, args):
