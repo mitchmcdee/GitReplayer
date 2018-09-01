@@ -2,6 +2,7 @@ import neovim
 import subprocess
 import sys
 import time
+from multiprocessing.threading import Lock
 from git import Repo
 from git.objects.commit import Commit
 from datetime import datetime
@@ -24,9 +25,11 @@ class GitReplayerPlugin:
     PLAYBACK_SPEED_JUMP_LARGE = 100
 
     def __init__(self, nvim):
+        self.lock = Lock()
         self.nvim = nvim
         self.initialised = False
 
+    # TODO(mitch): work out async issues
     # TODO(mitch): setup neovim keypresses \/ \/ \/
     # TODO(mitch): support play, pause, restart, quit, speed up/down, forward/back timestep commands
     # TODO(mitch): setup state for ^^^
@@ -35,29 +38,33 @@ class GitReplayerPlugin:
     def on_git_replayer_increment_speed_small(self):
         if not self.initialised:
             return
-        self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_SMALL
+        with self.lock:
+            self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_SMALL
 
     @neovim.command('GitReplayerIncrementSpeedLarge')
     def on_git_replayer_increment_speed_large(self):
         if not self.initialised:
             return
-        self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
+        with self.lock:
+            self.playback_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
 
     @neovim.command('GitReplayerDecrementSpeedSmall')
     def on_git_replayer_decrement_speed_small(self):
         if not self.initialised:
             return
-        decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_SMALL
-        self.playback_speed = max(0, decremented_speed)
+        with self.lock:
+            decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_SMALL
+            self.playback_speed = max(0, decremented_speed)
 
     @neovim.command('GitReplayerDecrementSpeedLarge')
     def on_git_replayer_decrement_speed_large(self):
         if not self.initialised:
             return
-        decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_LARGE
-        self.playback_speed = max(0, decremented_speed)
+        with self.lock:
+            decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_LARGE
+            self.playback_speed = max(0, decremented_speed)
 
-    @neovim.command('GitReplayerInit', nargs='*', allow_nested=True)
+    @neovim.command('GitReplayerInit', nargs='*')
     def on_git_replayer_init(self, args):
         '''
         Initialise replayer.
@@ -93,7 +100,7 @@ class GitReplayerPlugin:
         file_contents = ''.join(self.files[file_path])
         try:
             file_type = guess_lexer_for_filename(file_name, file_contents).name
-            self.nvim.command(f'set filetype={file_type}', async_=True)
+            self.nvim.command(f'set filetype={file_type}')
         except ClassNotFound:
             pass
 
@@ -112,7 +119,7 @@ class GitReplayerPlugin:
         self.files[file_path].insert(line_num, added_line)
         self.nvim.current.buffer.append('', line_num)
         # Jump to appended line.
-        self.nvim.command(str(line_num + 1), async_=True)
+        self.nvim.command(str(line_num + 1))
         window = self.nvim.current.window
         cursor_y, _ = window.cursor
         # Write out all chars in added line.
@@ -132,7 +139,8 @@ class GitReplayerPlugin:
         '''
         Simulates the delay between keyboard actions.
         '''
-        time.sleep(1 / max(self.playback_speed, 1e-6))
+        with self.lock:
+            time.sleep(1 / max(self.playback_speed, 1e-6))
 
     def draw_file_changes(self, file):
         """
@@ -151,7 +159,7 @@ class GitReplayerPlugin:
             elif change_type == "-":
                 self.handle_line_removal(file_path, current_line_num)
             # Jump to current line.
-            self.nvim.command(str(current_line_num), async_=True)
+            self.nvim.command(str(current_line_num))
             self.simulate_delay()
 
     def update_metadata(self, time, author, file):
@@ -162,7 +170,7 @@ class GitReplayerPlugin:
         metadata = f'Commit {time} of {len(self.timeline)}' \
                    + f' - Playing at {self.playback_speed} chars/second' \
                    + f' - {file_path} ({author})'
-        self.nvim.command(f'file {metadata}', async_=True)
+        self.nvim.command(f'file {metadata}')
 
     def replay(self):
         """
