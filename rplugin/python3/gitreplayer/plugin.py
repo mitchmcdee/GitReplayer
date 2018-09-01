@@ -8,7 +8,7 @@ from tqdm import tqdm
 from pygments.lexers import guess_lexer_for_filename
 from pygments.util import ClassNotFound
 from .parser import GitReplayerParser
-from .util import (MAGIC_EMPTY_TREE_HASH, get_blob_as_splitlines, is_diff_file_in_regex, get_hunk_values, get_file_diff)
+from .util import (MAGIC_EMPTY_TREE_HASH, get_blob_as_splitlines, is_diff_file_in_regex, get_current_line, get_file_diff)
 
 
 @neovim.plugin
@@ -36,18 +36,16 @@ class GitReplayerPlugin:
         start_datetime = parsed_args.start_datetime
         end_datetime = parsed_args.end_datetime
         self.playback_speed = parsed_args.playback_speed
-        print('waiting')
         timeline = self.get_timeline(repo, start_datetime, end_datetime, file_regex)
         if len(timeline) == 0:
-            print('No commits in git repo to process.')
-            sys.exit(1)
+            self.nvim.err_write('No commits in git repo to process.')
+            return
         # Initial repo file state
         self.initial_files = {
             file.b_path: get_blob_as_splitlines(file.b_blob) for file in timeline[0]
         }
         # Commits to visualise.
         self.timeline = timeline[1:]
-        print('hey')
         self.replay()
 
     def set_filetype(self, file_path):
@@ -88,8 +86,8 @@ class GitReplayerPlugin:
             wrapped_x = i % width
             wrapped_y = i // width
             # Make one-indexed.
-            self.nvim.err_write(f'{window.cursor} | {wrapped_x}, {cursor_y + wrapped_y}\n')
-            window.cursor = (wrapped_x, cursor_y + wrapped_y)
+            self.nvim.out_write(f'{window.cursor} | {wrapped_x}, {cursor_y + wrapped_y}\n')
+            # window.cursor = (wrapped_x, cursor_y + wrapped_y)
             time.sleep(1 / self.playback_speed)
 
     def handle_line_removal(self, file_path, line_num):
@@ -109,10 +107,7 @@ class GitReplayerPlugin:
         for line in get_file_diff(file):
             change_type = line[0]
             if change_type == "@":
-                _, _, current_line_num, a_num_lines = get_hunk_values(line)
-                # TODO(mitch): explain why removing one is necessary
-                if a_num_lines != 0:
-                    current_line_num -= 1
+                current_line_num = get_current_line(line)
             elif change_type == "+":
                 self.handle_line_addition(file_path, current_line_num, line)
                 current_line_num += 1

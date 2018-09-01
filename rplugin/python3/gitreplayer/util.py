@@ -37,14 +37,15 @@ def get_file_diff(diff: Diff):
     return list(unified_diff(a_lines, b_lines, n=0))[2:]
 
 
-def get_hunk_values(header):
+def get_current_line(header_line):
     """
-    Parses and returns the chunk header (i.e. hunk) line values.
+    Parses the chunk header and returns what the current line will be.
     """
-    # TODO(mitch): explain this function?
-    before, after = header[3:-3].split()
-    b_line_num, *b_num_lines = list(map(int, before[1:].split(",")))
-    b_num_lines = int(b_num_lines[0]) if b_num_lines else 1
-    a_line_num, *a_num_lines = list(map(int, after[1:].split(",")))
-    a_num_lines = int(a_num_lines[0]) if a_num_lines else 1
-    return b_line_num, b_num_lines, a_line_num, a_num_lines
+    # Strip unnecessary characters, convert to integer.
+    _, after = header[3:-3].split()
+    current_line_num, *num_lines_after = list(map(int, after[1:].split(",")))
+    num_lines_after = int(num_lines_after[0]) if num_lines_after else 1
+    # TODO(mitch): explain why removing one is necessary
+    if num_lines_after != 0:
+        current_line_num -= 1
+    return current_line_num
