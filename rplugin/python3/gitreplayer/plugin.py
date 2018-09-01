@@ -88,10 +88,11 @@ class GitReplayerPlugin:
             wrapped_x = i % width
             wrapped_y = i // width
             self.nvim.out_write(f'{wrapped_x}, {cursor_y + wrapped_y} | {width} {height}')
+            time.sleep(1)
             # window.cursor = (wrapped_x, cursor_y + wrapped_y)
             # time.sleep(1 / self.playback_speed)
 
-    def handle_line_removal(self, line_num):
+    def handle_line_removal(self, file_path, line_num):
         '''
         Handles encountering a '-' diff and removes the current line.
         '''
@@ -116,7 +117,7 @@ class GitReplayerPlugin:
                 self.handle_line_addition(file_path, current_line_num, line)
                 current_line_num += 1
             elif change_type == "-":
-                self.handle_line_removal(current_line_num)
+                self.handle_line_removal(file_path, current_line_num)
             # Jump to current line.
             self.nvim.command(str(current_line_num))
             time.sleep(1 / self.playback_speed)
