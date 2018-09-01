@@ -42,7 +42,7 @@ class GitReplayerPlugin:
     def on_set_speed(self, args):
         if len(args) != 1:
             return
-        self.playback_speed = args[0]
+        self.playback_speed = int(args[0])
 
     @neovim.command("GitReplayerInit", nargs="*")
     def on_init(self, args):
