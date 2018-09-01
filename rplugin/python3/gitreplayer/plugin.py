@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 from tqdm import tqdm
 from pygments.lexers import guess_lexer_for_filename
+from pygments.util import ClassNotFound
 from .parser import GitReplayerParser
 from .util import (MAGIC_EMPTY_TREE_HASH, get_blob_as_splitlines, is_diff_file_in_regex, get_hunk_values, get_file_diff)
 
@@ -56,8 +57,11 @@ class GitReplayerPlugin:
         """
         file_path = file.b_path or file.a_path
         file_name = file_path.split('/')[-1]
-        file_type = guess_lexer_for_filename(file_name, '').name
-        self.nvim.command(f'set filetype={file_type}')
+        try:
+            file_type = guess_lexer_for_filename(file_name, '').name
+            self.nvim.command(f'set filetype={file_type}')
+        except pygments.util.ClassNotFound:
+            pass
         self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
         for line in get_file_diff(file):
             change_type = line[0]
