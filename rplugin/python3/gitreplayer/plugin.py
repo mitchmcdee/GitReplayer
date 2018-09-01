@@ -57,7 +57,7 @@ class GitReplayerPlugin:
         decremented_speed = self.playback_speed - self.PLAYBACK_SPEED_JUMP_LARGE
         self.playback_speed = max(0, decremented_speed)
 
-    @neovim.command('GitReplayerInit', nargs='*')
+    @neovim.command('GitReplayerInit', nargs='*', allow_nested=True)
     def on_git_replayer_init(self, args):
         '''
         Initialise replayer.
@@ -93,7 +93,7 @@ class GitReplayerPlugin:
         file_contents = ''.join(self.files[file_path])
         try:
             file_type = guess_lexer_for_filename(file_name, file_contents).name
-            self.nvim.command(f'set filetype={file_type}')
+            self.nvim.command(f'set filetype={file_type}', async_=True)
         except ClassNotFound:
             pass
 
@@ -112,7 +112,7 @@ class GitReplayerPlugin:
         self.files[file_path].insert(line_num, added_line)
         self.nvim.current.buffer.append('', line_num)
         # Jump to appended line.
-        self.nvim.command(str(line_num + 1))
+        self.nvim.command(str(line_num + 1), async_=True)
         window = self.nvim.current.window
         cursor_y, _ = window.cursor
         # Write out all chars in added line.
@@ -151,7 +151,7 @@ class GitReplayerPlugin:
             elif change_type == "-":
                 self.handle_line_removal(file_path, current_line_num)
             # Jump to current line.
-            self.nvim.command(str(current_line_num))
+            self.nvim.command(str(current_line_num), async_=True)
             self.simulate_delay()
 
     def update_metadata(self, time, author, file):
@@ -162,7 +162,7 @@ class GitReplayerPlugin:
         metadata = f'Commit {time} of {len(self.timeline)}' \
                    + f' - Playing at {self.playback_speed} chars/second' \
                    + f' - {file_path} ({author})'
-        self.nvim.command(f'file {metadata}')
+        self.nvim.command(f'file {metadata}', async_=True)
 
     def replay(self):
         """
