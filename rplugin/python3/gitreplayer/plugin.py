@@ -21,10 +21,9 @@ class GitReplayerPlugin:
     def __init__(self, nvim):
         self.nvim = nvim
 
-    # TODO(mitch): investigate syntax highlighting
-    # TODO(mitch): setup neovim keypresses
+    # TODO(mitch): setup neovim keypresses \/ \/ \/
     # TODO(mitch): support play, pause, restart, quit, speed up/down, forward/back timestep commands
-    # TODO(mitch): setup state
+    # TODO(mitch): setup state for ^^^
 
     @neovim.command('InitGitReplayer', nargs='*')
     def on_init_git_replayer(self, args):
@@ -70,16 +69,16 @@ class GitReplayerPlugin:
         # Neovim doesn't like newlines.
         self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
 
-    def handle_line_addition(self, file_path, line):
+    def handle_line_addition(self, file_path, line_num, line):
         '''
         Handles encountering a '+' diff and write out the new line.
         '''
         added_line = line[1:]
-        self.files[file_path].insert(current_line_num, added_line)
-        self.nvim.current.buffer.append('', current_line_num)
+        self.files[file_path].insert(line_num, added_line)
+        self.nvim.current.buffer.append('', line_num)
         # Write out all chars in added line.
         for i in range(len(added_line)):
-            self.nvim.current.buffer[current_line_num] = added_line[:i]
+            self.nvim.current.buffer[line_num] = added_line[:i]
             time.sleep(1 / self.playback_speed)
 
     def handle_line_removal(self, line_num):
@@ -104,7 +103,7 @@ class GitReplayerPlugin:
                 if a_num_lines != 0:
                     current_line_num -= 1
             elif change_type == "+":
-                self.handle_line_addition(file_path, line)
+                self.handle_line_addition(file_path, current_line_num, line)
                 current_line_num += 1
             elif change_type == "-":
                 self.handle_line_removal(current_line_num)
