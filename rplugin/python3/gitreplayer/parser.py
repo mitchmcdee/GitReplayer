@@ -1,6 +1,6 @@
-'''
+"""
 Parser class
-'''
+"""
 import git
 import re
 import argparse
@@ -49,9 +49,9 @@ def valid_repo(repo_path):
 
 
 class GitReplayerParser(argparse.ArgumentParser):
-    '''
+    """
     A custom parser for configuring a git replayer.
-    '''
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

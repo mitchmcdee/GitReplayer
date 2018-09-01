@@ -14,16 +14,18 @@ class TqdmOutput(io.StringIO):
     Output stream for TQDM which will output to logger module instead of
     the stdout.
     """
-    buf = ''
+
+    buf = ""
+
     def __init__(self, nvim):
         super().__init__()
         self.nvim = nvim
 
     def write(self, buf):
-        self.buf = buf.strip('\r\n\t ')
+        self.buf = buf.strip("\r\n\t ")
 
     def flush(self):
-        self.nvim.current.line = f' Loading!\t{self.buf}'
+        self.nvim.current.line = f" Loading!\t{self.buf}"
 
 
 def get_blob_as_splitlines(blob: Blob):

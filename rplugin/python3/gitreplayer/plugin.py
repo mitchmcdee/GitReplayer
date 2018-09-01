@@ -9,7 +9,14 @@ from tqdm import tqdm
 from pygments.lexers import guess_lexer_for_filename
 from pygments.util import ClassNotFound
 from .parser import GitReplayerParser
-from .util import (TqdmOutput, MAGIC_EMPTY_TREE_HASH, get_blob_as_splitlines, is_diff_file_in_regex, get_current_line, get_file_diff)
+from .util import (
+    TqdmOutput,
+    MAGIC_EMPTY_TREE_HASH,
+    get_blob_as_splitlines,
+    is_diff_file_in_regex,
+    get_current_line,
+    get_file_diff,
+)
 
 
 @neovim.plugin
@@ -29,12 +36,13 @@ class GitReplayerPlugin:
     # TODO(mitch): setup neovim keypresses \/ \/ \/
     # TODO(mitch): support play, pause, restart, quit, speed up/down, forward/back timestep commands
     # TODO(mitch): setup state for ^^^
+    # TODO(mitch): add support for filtering by users?
 
-    @neovim.command('GitReplayerInit', nargs='*')
+    @neovim.command("GitReplayerInit", nargs="*")
     def on_git_replayer_init(self, args):
-        '''
+        """
         Initialise replayer.
-        '''
+        """
         parsed_args = GitReplayerParser().parse_args(args)
         repo = Repo(parsed_args.repo_path)
         file_regex = parsed_args.file_regex
@@ -43,7 +51,7 @@ class GitReplayerPlugin:
         self.playback_speed = parsed_args.playback_speed
         timeline = self.get_timeline(repo, start_datetime, end_datetime, file_regex)
         if len(timeline) == 0:
-            self.nvim.err_write('No commits in git repo to process.')
+            self.nvim.err_write("No commits in git repo to process.")
             return
         self.load_initial_files(timeline)
         # Commits to visualise, skipping first which is the initial file state.
@@ -51,38 +59,38 @@ class GitReplayerPlugin:
         self.replay()
 
     def load_initial_files(self, timeline):
-        '''
+        """
         Loads the initial file state of the repo.
-        '''
+        """
         _, files = timeline[0]
         self.initial_files = {f.b_path: get_blob_as_splitlines(f.b_blob) for f in files}
 
     def set_filetype(self, file_path):
-        '''
+        """
         Sets the filetype in neovim based off of the filename.
-        '''
-        file_name = file_path.split('/')[-1]
-        file_contents = ''.join(self.files[file_path])
+        """
+        file_name = file_path.split("/")[-1]
+        file_contents = "".join(self.files[file_path])
         try:
             file_type = guess_lexer_for_filename(file_name, file_contents).name
-            self.nvim.command(f'set filetype={file_type}', async_=True)
+            self.nvim.command(f"set filetype={file_type}", async_=True)
         except ClassNotFound:
             pass
 
     def load_file(self, file_path):
-        '''
+        """
         Loads the given file into the current buffer.
-        '''
+        """
         # Neovim doesn't like newlines.
-        self.nvim.current.buffer[:] = [l.strip('\n') for l in self.files[file_path]]
+        self.nvim.current.buffer[:] = [l.strip("\n") for l in self.files[file_path]]
 
     def handle_line_addition(self, file_path, line_num, line):
-        '''
+        """
         Handles encountering a '+' diff and write out the new line.
-        '''
+        """
         added_line = line[1:]
         self.files[file_path].insert(line_num, added_line)
-        self.nvim.current.buffer.append('', line_num)
+        self.nvim.current.buffer.append("", line_num)
         # Jump to appended line.
         self.nvim.command(str(line_num + 1), async_=True)
         window = self.nvim.current.window
@@ -94,16 +102,16 @@ class GitReplayerPlugin:
             self.simulate_delay()
 
     def handle_line_removal(self, file_path, line_num):
-        '''
+        """
         Handles encountering a '-' diff and removes the current line.
-        '''
+        """
         self.files[file_path].pop(line_num)
         del self.nvim.current.buffer[line_num]
 
     def simulate_delay(self):
-        '''
+        """
         Simulates the delay between keyboard actions.
-        '''
+        """
         time.sleep(1 / max(self.playback_speed, 1e-6))
 
     def draw_file_changes(self, file):
@@ -127,14 +135,16 @@ class GitReplayerPlugin:
             self.simulate_delay()
 
     def update_metadata(self, time, author, file):
-        '''
+        """
         Draws the current timestep metadata to neovim through setting a "filename".
-        '''
+        """
         file_path = file.b_path or file.a_path
-        metadata = f'Commit {time} of {len(self.timeline)}' \
-                   + f' - Playing at {self.playback_speed} chars/second' \
-                   + f' - {file_path} ({author})'
-        self.nvim.command(f'file {metadata}', async_=True)
+        metadata = (
+            f"Commit {time} of {len(self.timeline)}"
+            + f" - Playing at {self.playback_speed} chars/second"
+            + f" - {file_path} ({author})"
+        )
+        self.nvim.command(f"file {metadata}", async_=True)
 
     def replay(self):
         """
