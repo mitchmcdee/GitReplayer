@@ -116,8 +116,8 @@ class GitReplayerPlugin:
         Draws the current timestep metadata to neovim through setting a "filename".
         '''
         file_path = file.b_path or file.a_path
-        metadata = f'Commit {time} of {len(self.timeline)}'
-                   + f' - Playback speed at {self.playback_speed}'
+        metadata = f'Commit {time} of {len(self.timeline)}' \
+                   + f' - Playback speed at {self.playback_speed}' \
                    + f' - Current file is {file_path}'
         self.nvim.command(f'file {metadata}')
 
