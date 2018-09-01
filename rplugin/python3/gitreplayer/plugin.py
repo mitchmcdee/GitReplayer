@@ -24,7 +24,7 @@ class GitReplayerPlugin:
     PLAYBACK_SPEED_JUMP_LARGE = 100
 
     def __init__(self, nvim):
-        self.lock = Lock()
+        self.nvim = nvim
 
     # TODO(mitch): setup neovim keypresses \/ \/ \/
     # TODO(mitch): support play, pause, restart, quit, speed up/down, forward/back timestep commands
