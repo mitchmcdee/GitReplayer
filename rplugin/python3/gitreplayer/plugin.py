@@ -40,13 +40,17 @@ class GitReplayerPlugin:
         if len(timeline) == 0:
             self.nvim.err_write('No commits in git repo to process.')
             return
-        # Initial repo file state
-        self.initial_files = {
-            file.b_path: get_blob_as_splitlines(file.b_blob) for file in timeline[0]
-        }
-        # Commits to visualise.
+        self.load_initial_files(timeline)
+        # Commits to visualise, skipping first which is the initial file state.
         self.timeline = timeline[1:]
         self.replay()
+
+    def load_initial_files(self, timeline):
+        '''
+        Loads the initial file state of the repo.
+        '''
+        _, files = timeline[0]
+        self.initial_files = {f.b_path: get_blob_as_splitlines(f.b_blob) for f in files}
 
     def set_filetype(self, file_path):
         '''
@@ -111,14 +115,15 @@ class GitReplayerPlugin:
             self.nvim.command(str(current_line_num))
             time.sleep(1 / self.playback_speed)
 
-    def update_metadata(self, time, file):
+    def update_metadata(self, time, author, file):
         '''
         Draws the current timestep metadata to neovim through setting a "filename".
         '''
         file_path = file.b_path or file.a_path
         metadata = f'Commit {time} of {len(self.timeline)}' \
                    + f' - Playback speed at {self.playback_speed}' \
-                   + f' - Current file is {file_path}'
+                   + f' - Current file is {file_path}' \
+                   + f' - Current author is {author}'
         self.nvim.command(f'file {metadata}')
 
     def replay(self):
@@ -128,7 +133,7 @@ class GitReplayerPlugin:
         while True:
             self.files = self.initial_files
             # For each timestep, play back the changed lines in affected files.
-            for time, timestep in enumerate(self.timeline):
+            for time, (author, timestep) in enumerate(self.timeline):
                 for file in timestep:
                     # Move renamed files
                     if file.renamed_file:
@@ -138,7 +143,7 @@ class GitReplayerPlugin:
                     if file.new_file:
                         self.files[file.b_path] = []
                     # Draw file changes and timestep metadata
-                    self.update_metadata(time, file)
+                    self.update_metadata(time, author, file)
                     self.draw_file_changes(file)
                     # Remove deleted files
                     if file.deleted_file:
@@ -173,7 +178,7 @@ class GitReplayerPlugin:
         """
         Get a list of timeline entries representing the current state of the repo at
         each commit, where each entry is a delta on the previous and the first entry
-        is the starting state.
+        is the starting state. Also stores which user made the timestep changes.
         """
         timeline = []
         commits = self.get_commits_in_range(repo, start_datetime, end_datetime)
@@ -188,6 +193,6 @@ class GitReplayerPlugin:
                     timestep.append(changed_file)
             # First entry in timeline is the current state, so ignore if empty.
             if commit_num == 0 or len(timestep) != 0:
-                timeline.append(timestep)
+                timeline.append((commit.author, timestep))
             previous_commit = commit
         return timeline
