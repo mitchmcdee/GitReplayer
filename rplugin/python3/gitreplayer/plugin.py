@@ -57,7 +57,7 @@ class GitReplayerPlugin:
         decremented_speed = self.playback_speed + self.PLAYBACK_SPEED_JUMP_LARGE
         self.playback_speed = min(0, decremented_speed)
 
-    @neovim.command('GitReplayerInit', nargs='*', sync=True)
+    @neovim.command('GitReplayerInit', nargs='*')
     def on_git_replayer_init(self, args):
         '''
         Initialise replayer.
