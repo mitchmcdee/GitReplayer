@@ -3,7 +3,6 @@ import subprocess
 import sys
 import time
 from git import Repo
-from git.objects.base import Object
 from git.objects.commit import Commit
 from datetime import datetime
 from tqdm import tqdm
@@ -172,8 +171,7 @@ class GitReplayerPlugin:
                 if commit_num != 0:
                     commits.append(chronological_commits[commit_num - 1])
                 else:
-                    null_tree = repo.tree(MAGIC_EMPTY_TREE_HASH)
-                    commits.append(Commit(repo, Object.NULL_BIN_SHA, tree=null_tree))
+                    commits.append(repo.tree(MAGIC_EMPTY_TREE_HASH))
             commits.append(commit)
         return commits
 
@@ -196,6 +194,7 @@ class GitReplayerPlugin:
                     timestep.append(changed_file)
             # First entry in timeline is the current state, so ignore if empty.
             if commit_num == 0 or len(timestep) != 0:
-                timeline.append((commit.author, timestep))
+                author = commit.author if isinstance(commit, Commit) else None
+                timeline.append((author, timestep))
             previous_commit = commit
         return timeline
