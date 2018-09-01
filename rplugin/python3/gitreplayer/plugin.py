@@ -77,13 +77,10 @@ class GitReplayerPlugin:
         # Jump to appended line.
         self.nvim.command(str(line_num + 1))
         window = self.nvim.current.window
-        height = window.height
-        width = window.width
         cursor_y, _ = window.cursor
         # Write out all chars in added line.
         for i in range(len(added_line)):
             self.nvim.current.buffer[line_num] = added_line[:i]
-            # TODO(mitch): this breaks on wrapping? maybe try :set wrap?
             window.cursor = (cursor_y, i)
             time.sleep(1 / self.playback_speed)
 
@@ -96,7 +93,7 @@ class GitReplayerPlugin:
 
     def draw_file_changes(self, file):
         """
-        Draws the file changes to the screen.
+        Draws the file changes to neovim.
         """
         file_path = file.b_path or file.a_path
         self.set_filetype(file_path)
@@ -114,6 +111,16 @@ class GitReplayerPlugin:
             self.nvim.command(str(current_line_num))
             time.sleep(1 / self.playback_speed)
 
+    def update_metadata(self, time, file):
+        '''
+        Draws the current timestep metadata to neovim through setting a "filename".
+        '''
+        file_path = file.b_path or file.a_path
+        metadata = f'Commit {time} of {len(self.timeline)}'
+                   + f' - Playback speed at {self.playback_speed}'
+                   + f' - Current file is {file_path}'
+        self.nvim.command(f'file {metadata}')
+
     def replay(self):
         """
         Start git repo playback.
@@ -121,7 +128,7 @@ class GitReplayerPlugin:
         while True:
             self.files = self.initial_files
             # For each timestep, play back the changed lines in affected files.
-            for timestep in self.timeline:
+            for time, timestep in enumerate(self.timeline):
                 for file in timestep:
                     # Move renamed files
                     if file.renamed_file:
@@ -130,7 +137,8 @@ class GitReplayerPlugin:
                     # Add new files
                     if file.new_file:
                         self.files[file.b_path] = []
-                    # Draw file changes
+                    # Draw file changes and timestep metadata
+                    self.update_metadata(time, file)
                     self.draw_file_changes(file)
                     # Remove deleted files
                     if file.deleted_file:
