@@ -56,14 +56,15 @@ class GitReplayerPlugin:
         if len(timeline) == 0:
             self.nvim.err_write("No commits in git repo to process.")
             return
-        self.timeline = timeline
+        self.files = self.get_file_state_at_timestep(timeline[0])
+        self.timeline = timeline[1:]
         self.replay()
 
-    def get_file_state_at_index(self, index):
+    def get_file_state_at_timestep(self, timestep):
         """
         Loads the file state at the given commit index in the repo.
         """
-        _, files = self.timeline[index]
+        _, files = timestep
         return {f.b_path: get_blob_as_splitlines(f.b_blob) for f in files}
 
     def set_filetype(self, file_path):
@@ -149,7 +150,6 @@ class GitReplayerPlugin:
         """
         Start git repo playback.
         """
-        self.files = self.get_file_state_at_index(0)
         # For each timestep, play back the changed lines in affected files.
         for time, (commit, timestep) in enumerate(self.timeline):
             for file in timestep:
@@ -194,8 +194,9 @@ class GitReplayerPlugin:
                 timestep.append(diff)
             if len(timestep) == 0:
                 continue
+            # If we're the first commit with a non-empty timestep, add a null initial state.
             if commit_num == 0:
-                timeline.append(None, [])
-            timeline.append(commit, timestep)
+                timeline.append((None, []))
+            timeline.append((commit, timestep))
             previous_commit = commit
         return timeline
