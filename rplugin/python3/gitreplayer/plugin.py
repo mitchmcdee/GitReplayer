@@ -169,28 +169,6 @@ class GitReplayerPlugin:
                 if file.deleted_file:
                     del self.files[file.a_path]
 
-    def get_commits_in_range(self, repo, start_datetime, end_datetime):
-        """
-        Get commits from oldest to newest and filter out those outside the given range.
-        """
-        commits = []
-        chronological_commits = list(reversed(list(repo.iter_commits())))
-        for commit_num, commit in enumerate(chronological_commits):
-            commit_datetime = datetime.fromtimestamp(commit.committed_date)
-            if start_datetime >= commit_datetime:
-                continue
-            if commit_datetime >= end_datetime:
-                break
-            # If we're adding the first commit, make sure we add either the previous
-            # commit or an empty tree to correctly diff the timeline.
-            if len(commits) == 0:
-                if commit_num != 0:
-                    commits.append(chronological_commits[commit_num - 1])
-                else:
-                    commits.append(repo.tree(MAGIC_EMPTY_TREE_HASH))
-            commits.append(commit)
-        return commits
-
     def get_timeline(self, repo, start_datetime, end_datetime, file_regex, author_regex):
         """
         Get a list of timeline entries representing the current state of the repo at
@@ -208,18 +186,19 @@ class GitReplayerPlugin:
             if commit_datetime >= end_datetime:
                 break
             # First entry in timeline is the current state, so ignore if early.
-            if len(commits) != 0 and start_datetime >= commit_datetime:
+            if len(timeline) != 0 and start_datetime >= commit_datetime:
                 continue
-            # First entry in timeline is the current state, so ignore invalid regex.
-            if len(commits) != 0 and not is_author_in_regex(commit.author.name, author_regex):
+            # First entry in timeline is the current state, so ignore invalid author.
+            author = commit.author.name
+            if len(timeline) != 0 and not is_author_in_regex(author, author_regex):
                 continue
             for diff in previous_commit.diff(commit):
-                # First entry in timeline is the current state, so ignore invalid regex.
-                if len(commits) != 0 and not is_diff_file_in_regex(diff, file_regex):
+                # First entry in timeline is the current state, so ignore invalid file.
+                if len(timeline) != 0 and not is_diff_file_in_regex(diff, file_regex):
                     continue
                 timestep.append(diff)
             # First entry in timeline is the current state, so ignore if empty.
-            if len(commits) != 0 and len(timestep) == 0:
+            if len(timeline) != 0 and len(timestep) == 0:
                 continue
             timeline.append((commit if isinstance(commit, Commit) else None, timestep))
             previous_commit = commit
