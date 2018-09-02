@@ -56,17 +56,15 @@ class GitReplayerPlugin:
         if len(timeline) == 0:
             self.nvim.err_write("No commits in git repo to process.")
             return
-        self.load_initial_files(timeline)
-        # Commits to visualise, skipping first which is the initial file state.
-        self.timeline = timeline[1:]
+        self.timeline = timeline
         self.replay()
 
-    def load_initial_files(self, timeline):
+    def get_file_state_at_index(self, index):
         """
-        Loads the initial file state of the repo.
+        Loads the file state at the given commit index in the repo.
         """
-        _, files = timeline[0]
-        self.initial_files = {f.b_path: get_blob_as_splitlines(f.b_blob) for f in files}
+        _, files = self.timeline[index]
+        return {f.b_path: get_blob_as_splitlines(f.b_blob) for f in files}
 
     def set_filetype(self, file_path):
         """
@@ -151,7 +149,7 @@ class GitReplayerPlugin:
         """
         Start git repo playback.
         """
-        self.files = self.initial_files
+        self.files = self.get_file_state_at_index(0)
         # For each timestep, play back the changed lines in affected files.
         for time, (commit, timestep) in enumerate(self.timeline):
             for file in timestep:
@@ -179,9 +177,7 @@ class GitReplayerPlugin:
         # Reorder chronologically
         commits = list(reversed(list(repo.iter_commits())))
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
-        tqdm_output = TqdmOutput(self.nvim)
-        for commit in tqdm(commits, file=tqdm_output):
-            timestep = []
+        for commit in tqdm(commits, file=TqdmOutput(self.nvim)):
             commit_datetime = datetime.fromtimestamp(commit.committed_date)
             if commit_datetime >= end_datetime:
                 break
@@ -192,6 +188,7 @@ class GitReplayerPlugin:
             author = commit.author.name
             if len(timeline) != 0 and not is_author_in_regex(author, author_regex):
                 continue
+            timestep = []
             for diff in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid file.
                 if len(timeline) != 0 and not is_diff_file_in_regex(diff, file_regex):
