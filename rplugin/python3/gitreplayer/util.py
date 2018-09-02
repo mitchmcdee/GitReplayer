@@ -42,9 +42,16 @@ def get_blob_as_splitlines(blob: Blob):
 def is_diff_file_in_regex(diff: Diff, file_regex: str):
     """
     Returns True if the given diff contains a file path that matches the given
-    file regex, else returns False.
+    regex, else returns False.
     """
     return any(re.search(file_regex, p) for p in (diff.a_path, diff.b_path))
+
+
+def is_author_in_regex(author: str, author_regex: str):
+    """
+    Returns True if the given author matches the given regex, else returns False.
+    """
+    return re.search(author_regex, author)
 
 
 def get_file_diff(diff: Diff):

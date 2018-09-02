@@ -14,6 +14,7 @@ from .util import (
     MAGIC_EMPTY_TREE_HASH,
     get_blob_as_splitlines,
     is_diff_file_in_regex,
+    is_author_in_regex,
     get_current_line,
     get_file_diff,
 )
