@@ -58,6 +58,8 @@ class GitReplayerPlugin:
             return
         # First timestep is initial state, rest are diffs.
         self.files = self.get_file_state_at_timestep(timeline[0])
+        print(self.files)
+        input()
         self.timeline = timeline[1:]
         self.replay()
 
