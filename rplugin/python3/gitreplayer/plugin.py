@@ -143,8 +143,10 @@ class GitReplayerPlugin:
         """
         file_path = file.b_path or file.a_path
         commit_datetime = str(datetime.fromtimestamp(commit.committed_date))
-        metadata = f"Commit {timestep} of {len(self.timeline)}" \
-                   + f" - {file_path} (by {commit.author} at {commit_datetime})"
+        metadata = (
+            f"Commit {timestep} of {len(self.timeline)}"
+            + f" - {file_path} (by {commit.author} at {commit_datetime})"
+        )
         self.nvim.command(f"file {metadata}", async_=True)
 
     def replay(self):
