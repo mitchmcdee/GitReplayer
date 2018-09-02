@@ -198,10 +198,11 @@ class GitReplayerPlugin:
         is the starting state. Also stores which user made the timestep changes.
         """
         timeline = []
-        chronological_commits = list(reversed(list(repo.iter_commits())))
+        # Reorder chronologically
+        commits = list(reversed(list(repo.iter_commits())))
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
         tqdm_output = TqdmOutput(self.nvim)
-        for commit in tqdm(chronological_commits, file=tqdm_output):
+        for commit in tqdm(commits, file=tqdm_output):
             timestep = []
             commit_datetime = datetime.fromtimestamp(commit.committed_date)
             if commit_datetime >= end_datetime:
