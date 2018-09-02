@@ -108,8 +108,6 @@ class GitReplayerPlugin:
         """
         Handles encountering a '-' diff and removes the current line.
         """
-        if len(self.nvim.current.buffer) >= line_num:
-            return
         self.files[file_path].pop(line_num)
         del self.nvim.current.buffer[line_num]
 
