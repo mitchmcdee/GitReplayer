@@ -212,7 +212,6 @@ class GitReplayerPlugin:
             # First entry in timeline is the current state, so ignore if empty.
             if commit_num != 0 and len(timestep) == 0:
                 continue
-            commit = commit if isinstance(commit, Commit) else None
-            timeline.append((commit, timestep))
+            timeline.append((commit if isinstance(commit, Commit) else None, timestep))
             previous_commit = commit
         return timeline
