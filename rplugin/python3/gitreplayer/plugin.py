@@ -177,26 +177,25 @@ class GitReplayerPlugin:
         # Reorder chronologically
         commits = list(reversed(list(repo.iter_commits())))
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
-        for commit in tqdm(commits, file=TqdmOutput(self.nvim)):
+        tqdm_output = TqdmOutput(self.nvim)
+        for commit_num, commit in tqdm(list(enumerate(commits)), file=tqdm_output):
             commit_datetime = datetime.fromtimestamp(commit.committed_date)
             if commit_datetime >= end_datetime:
                 break
-            # First entry in timeline is the current state, so ignore if early.
-            if len(timeline) != 0 and start_datetime >= commit_datetime:
+            if start_datetime >= commit_datetime:
                 continue
-            # First entry in timeline is the current state, so ignore invalid author.
-            author = commit.author.name
-            if len(timeline) != 0 and not is_author_in_regex(author, author_regex):
+            if not is_author_in_regex(commit.author.name, author_regex):
                 continue
             timestep = []
             for diff in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid file.
-                if len(timeline) != 0 and not is_diff_file_in_regex(diff, file_regex):
+                if not is_diff_file_in_regex(diff, file_regex):
                     continue
                 timestep.append(diff)
-            # First entry in timeline is the current state, so ignore if empty.
-            if len(timeline) != 0 and len(timestep) == 0:
+            if len(timestep) == 0:
                 continue
-            timeline.append((commit if isinstance(commit, Commit) else None, timestep))
+            if commit_num == 0:
+                timeline.append(None, [])
+            timeline.append(commit, timestep)
             previous_commit = commit
         return timeline
