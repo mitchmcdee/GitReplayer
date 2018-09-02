@@ -189,7 +189,7 @@ class GitReplayerPlugin:
             timestep = []
             for diff in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid file.
-                if not is_diff_file_in_regex(diff, file_regex):
+                if len(timeline) != 0 and not is_diff_file_in_regex(diff, file_regex):
                     continue
                 timestep.append(diff)
             if len(timestep) == 0:
