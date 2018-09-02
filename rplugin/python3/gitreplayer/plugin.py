@@ -110,9 +110,9 @@ class GitReplayerPlugin:
         """
         try:
             self.files[file_path].pop(line_num)
+            del self.nvim.current.buffer[line_num]
         except:
             pass
-        del self.nvim.current.buffer[line_num]
 
     def simulate_delay(self):
         """
