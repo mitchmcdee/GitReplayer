@@ -203,12 +203,13 @@ class GitReplayerPlugin:
         tqdm_output = TqdmOutput(self.nvim)
         for commit_num, commit in tqdm(list(enumerate(commits)), file=tqdm_output):
             timestep = []
-            # if commit_num != 0 and not is_author_in_regex(commit.author.name, author_regex):
-            #     continue
+            if commit_num != 0 and not is_author_in_regex(commit.author.name, author_regex):
+                continue
             for diff in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid regex.
                 if commit_num != 0 and not is_diff_file_in_regex(diff, file_regex):
-                    timestep.append(diff)
+                    continue
+                timestep.append(diff)
             # First entry in timeline is the current state, so ignore if empty.
             if commit_num != 0 and len(timestep) == 0:
                 continue
