@@ -144,7 +144,7 @@ class GitReplayerPlugin:
         file_path = file.b_path or file.a_path
         commit_datetime = str(datetime.fromtimestamp(commit.commited_date))
         metadata = f"Commit {timestep} of {len(self.timeline)}" \
-                   + f" - {file_path} (by {commit.author} at {commit_datetime})"
+                   + f" - {file_path} (by {commit.committer} at {commit_datetime})"
         self.nvim.command(f"file {metadata}", async_=True)
 
     def replay(self):
@@ -203,7 +203,7 @@ class GitReplayerPlugin:
         tqdm_output = TqdmOutput(self.nvim)
         for commit_num, commit in tqdm(list(enumerate(commits)), file=tqdm_output):
             timestep = []
-            if commit_num != 0 and not is_author_in_regex(commit.author, author_regex):
+            if commit_num != 0 and not is_author_in_regex(commit.committer, author_regex):
                 continue
             for diff in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid regex.
