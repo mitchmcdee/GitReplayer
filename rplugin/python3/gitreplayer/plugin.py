@@ -194,10 +194,10 @@ class GitReplayerPlugin:
                 timestep.append(diff)
             if len(timestep) == 0:
                 continue
-            # If we're the first commit, add the initial state (i.e. the previous commit).
-            if len(timeline) == 0:
-                empty_tree = repo.tree(MAGIC_EMPTY_TREE_HASH)
-                timeline.append((None, list(empty_tree.diff(previous_commit))))
+            # # If we're the first commit, add the initial state (i.e. the previous commit).
+            # if len(timeline) == 0:
+            #     empty_tree = repo.tree(MAGIC_EMPTY_TREE_HASH)
+            #     timeline.append((None, list(empty_tree.diff(previous_commit))))
             timeline.append((commit, timestep))
             previous_commit = commit
         return timeline
