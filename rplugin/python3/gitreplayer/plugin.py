@@ -177,8 +177,7 @@ class GitReplayerPlugin:
         timeline = []
         # Reorder chronologically
         commits = list(reversed(list(repo.iter_commits())))
-        empty_tree = repo.tree(MAGIC_EMPTY_TREE_HASH)
-        previous_commit = empty_tree
+        previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
         tqdm_output = TqdmOutput(self.nvim)
         for commit_num, commit in tqdm(list(enumerate(commits)), file=tqdm_output):
             commit_datetime = datetime.fromtimestamp(commit.committed_date)
@@ -197,6 +196,7 @@ class GitReplayerPlugin:
                 continue
             # If we're the first commit, add the initial state (i.e. the previous commit).
             if len(timeline) == 0:
+                empty_tree = repo.tree(MAGIC_EMPTY_TREE_HASH)
                 timeline.append((None, list(empty_tree.diff(previous_commit))))
             timeline.append((commit, timestep))
             previous_commit = commit
