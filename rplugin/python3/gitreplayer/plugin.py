@@ -58,8 +58,8 @@ class GitReplayerPlugin:
             return
         # First timestep is initial state, rest are diffs.
         self.files = self.get_file_state_at_timestep(timeline[0])
-        self.nvim.err_write(str(self.files))
-        time.sleep(10000)
+        with open('test.out') as f:
+            f.write(str(self.files))
         self.timeline = timeline[1:]
         self.replay()
 
