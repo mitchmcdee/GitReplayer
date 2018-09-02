@@ -47,10 +47,11 @@ class GitReplayerPlugin:
         parsed_args = GitReplayerParser().parse_args(args)
         repo = Repo(parsed_args.repo_path)
         file_regex = parsed_args.file_regex
+        author_regex = parsed_args.author_regex
         start_datetime = parsed_args.start_datetime
         end_datetime = parsed_args.end_datetime
         self.playback_speed = parsed_args.playback_speed
-        timeline = self.get_timeline(repo, start_datetime, end_datetime, file_regex)
+        timeline = self.get_timeline(repo, start_datetime, end_datetime, file_regex, author_regex)
         if len(timeline) == 0:
             self.nvim.err_write("No commits in git repo to process.")
             return
@@ -135,16 +136,13 @@ class GitReplayerPlugin:
             self.nvim.command(str(current_line_num), async_=True)
             self.simulate_delay()
 
-    def update_metadata(self, time, author, file):
+    def update_metadata(self, timestep, commit, file):
         """
         Draws the current timestep metadata to neovim through setting a "filename".
         """
         file_path = file.b_path or file.a_path
-        metadata = (
-            f"Commit {time} of {len(self.timeline)}"
-            + f" - Playing at {self.playback_speed} chars/second"
-            + f" - {file_path} ({author})"
-        )
+        metadata = f"Commit {timestep} of {len(self.timeline)}" \
+                   + f"- {file_path} (by {commit.author})"
         self.nvim.command(f"file {metadata}", async_=True)
 
     def replay(self):
@@ -153,7 +151,7 @@ class GitReplayerPlugin:
         """
         self.files = self.initial_files
         # For each timestep, play back the changed lines in affected files.
-        for time, (author, timestep) in enumerate(self.timeline):
+        for time, (commit, timestep) in enumerate(self.timeline):
             for file in timestep:
                 # Move renamed files
                 if file.renamed_file:
@@ -163,7 +161,7 @@ class GitReplayerPlugin:
                 if file.new_file:
                     self.files[file.b_path] = []
                 # Draw file changes and timestep metadata
-                self.update_metadata(time, author, file)
+                self.update_metadata(time, commit, file)
                 self.draw_file_changes(file)
                 # Remove deleted files
                 if file.deleted_file:
@@ -191,7 +189,7 @@ class GitReplayerPlugin:
             commits.append(commit)
         return commits
 
-    def get_timeline(self, repo, start_datetime, end_datetime, file_regex):
+    def get_timeline(self, repo, start_datetime, end_datetime, file_regex, author_regex):
         """
         Get a list of timeline entries representing the current state of the repo at
         each commit, where each entry is a delta on the previous and the first entry
@@ -203,13 +201,16 @@ class GitReplayerPlugin:
         tqdm_output = TqdmOutput(self.nvim)
         for commit_num, commit in tqdm(list(enumerate(commits)), file=tqdm_output):
             timestep = []
-            for changed_file in previous_commit.diff(commit):
+            if commit_num != 0 and not is_author_in_regex(commit.author, author_regex):
+                continue
+            for diff in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid regex.
-                if commit_num == 0 or is_diff_file_in_regex(changed_file, file_regex):
-                    timestep.append(changed_file)
+                if commit_num != 0 and not is_diff_file_in_regex(diff, file_regex):
+                    timestep.append(diff)
             # First entry in timeline is the current state, so ignore if empty.
-            if commit_num == 0 or len(timestep) != 0:
-                author = commit.author if isinstance(commit, Commit) else None
-                timeline.append((author, timestep))
+            if commit_num != 0 and len(timestep) == 0:
+                continue
+            commit = commit if isinstance(commit, Commit) else None
+            timeline.append((commit, timestep))
             previous_commit = commit
         return timeline

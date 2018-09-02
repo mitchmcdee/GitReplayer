@@ -91,6 +91,15 @@ class GitReplayerParser(argparse.ArgumentParser):
             help='Only visualise files whose relative filepath matches the given regex e.g. "test/*.txt"',
         )
         self.add_argument(
+            "-a",
+            "--author-regex",
+            dest="author_regex",
+            type=valid_regex,
+            nargs="?",
+            default=r".*",
+            help='Only visualise files whose author matches the given regex e.g. "mitchmcdee"',
+        )
+        self.add_argument(
             "-p",
             "--playback-speed",
             dest="playback_speed",
