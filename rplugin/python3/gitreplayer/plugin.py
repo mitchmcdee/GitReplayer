@@ -198,20 +198,27 @@ class GitReplayerPlugin:
         is the starting state. Also stores which user made the timestep changes.
         """
         timeline = []
-        commits = self.get_commits_in_range(repo, start_datetime, end_datetime)
+        chronological_commits = list(reversed(list(repo.iter_commits())))
         previous_commit = repo.tree(MAGIC_EMPTY_TREE_HASH)
         tqdm_output = TqdmOutput(self.nvim)
-        for commit_num, commit in tqdm(list(enumerate(commits)), file=tqdm_output):
+        for commit in tqdm(chronological_commits, file=tqdm_output):
             timestep = []
-            if commit_num != 0 and not is_author_in_regex(commit.author.name, author_regex):
+            commit_datetime = datetime.fromtimestamp(commit.committed_date)
+            if commit_datetime >= end_datetime:
+                break
+            # First entry in timeline is the current state, so ignore if early.
+            if len(commits) != 0 and start_datetime >= commit_datetime:
+                continue
+            # First entry in timeline is the current state, so ignore invalid regex.
+            if len(commits) != 0 and not is_author_in_regex(commit.author.name, author_regex):
                 continue
             for diff in previous_commit.diff(commit):
                 # First entry in timeline is the current state, so ignore invalid regex.
-                if commit_num != 0 and not is_diff_file_in_regex(diff, file_regex):
+                if len(commits) != 0 and not is_diff_file_in_regex(diff, file_regex):
                     continue
                 timestep.append(diff)
             # First entry in timeline is the current state, so ignore if empty.
-            if commit_num != 0 and len(timestep) == 0:
+            if len(commits) != 0 and len(timestep) == 0:
                 continue
             timeline.append((commit if isinstance(commit, Commit) else None, timestep))
             previous_commit = commit
