@@ -108,11 +108,8 @@ class GitReplayerPlugin:
         """
         Handles encountering a '-' diff and removes the current line.
         """
-        try:
-            self.files[file_path].pop(line_num)
-            del self.nvim.current.buffer[line_num]
-        except:
-            pass
+        self.files[file_path].pop(line_num)
+        del self.nvim.current.buffer[line_num]
 
     def simulate_delay(self):
         """
